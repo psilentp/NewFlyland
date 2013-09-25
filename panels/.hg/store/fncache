@@ -1,0 +1,224 @@
+data/Matlab Codes/IO_tools/choose_pats.m.i
+data/C codes for Controller/XmegaController/xitoa.lst.i
+data/C codes for Controller/Bootloader4Controller/main.c.i
+data/C codes for Panels/Bootloader4Panels/panel_bl.elf.i
+data/Matlab Codes/IO_tools/choose_functions.m.i
+data/Matlab Codes/controller/Please_load.bmp.i
+data/Matlab Codes/functions/position_function_sine_02Hz_50_pp_moded_8.mat.i
+data/C codes for Controller/XmegaController/timer.c.i
+data/Matlab Codes/IO_tools/make_flash_image.m.i
+data/C codes for Controller/Bootloader4Controller/default/BootloaderMkII_gcc.elf.i
+data/Matlab Codes/controller/displayOnGui.m.i
+data/C codes for Panels/PanelCode/i2c.h.i
+data/Matlab Codes/vec2dec_fast.m.i
+data/C codes for Controller/Bootloader4Controller/bootloadermkii_gcc.aws.i
+data/Matlab Codes/functions/make_square_wave_function.m.i
+data/Matlab Codes/Patterns/make_grating_row_compr.m.i
+data/Matlab Codes/controller/initialized_PControl_display.m.i
+data/C codes for Controller/XmegaController/Makefile.i
+data/C codes for Controller/Bootloader4Controller/default/dep/main.o.d.i
+data/Matlab Codes/controller/setPattern.fig.i
+data/Matlab Codes/Patterns/make_shorter_contrast_stripes_48_telethon.m.i
+data/Matlab Codes/functions/function_square_0.05hz_05per.mat.i
+data/Matlab Codes/functions/make_func_script.m.i
+data/Matlab Codes/controller/PControl_init.m.i
+data/C codes for Controller/Bootloader4Controller/default/dep/eeprom_driver.o.d.i
+data/Matlab Codes/functions/position_function_sine_025Hz_20_pp_var.mat.i
+data/Matlab Codes/functions/function_sine_1hz.mat.i
+data/Matlab Codes/controller/signed_byte_to_char.m.i
+data/Matlab Codes/functions/make_sine_wave_function.m.i
+data/Matlab Codes/functions/position_function_sine_025Hz_20_pp.mat.i
+data/C codes for Controller/Bootloader4Controller/serial.c.i
+data/Matlab Codes/Patterns/arena_config.fig.i
+data/Matlab Codes/arena_config/test.mat.i
+data/C codes for Controller/XmegaController/What is changed in Rev 1.2.docx.i
+data/Matlab Codes/functions/function_1p5_square_amp1_0.1hz_symmetric_var.mat.i
+data/Matlab Codes/Pattern_tools/BinPats.m.i
+data/Matlab Codes/functions/position_function_sine_02Hz_50_pp_moded_16.mat.i
+data/C codes for Controller/XmegaController/xitoa.h.i
+data/C codes for Panels/Bootloader4Panels/Makefile.i
+data/Matlab Codes/arena_config/cfg12Panel_4Bus.mat.i
+data/Matlab Codes/test_scripts/testDumpFrameRate.m.i
+data/C codes for Panels/PanelCode/panel.d.i
+data/C codes for Controller/Bootloader4Controller/default/BootloaderMkII_gcc.lss.i
+data/C codes for Panels/PanelCode/legacy.h.i
+data/C codes for Controller/XmegaController/utils.c.i
+data/C codes for Controller/Bootloader4Controller/README.avrdude.i
+data/C codes for Controller/XmegaController/integer.h.i
+data/C codes for Panels/PanelCode/panel.eep.i
+data/Matlab Codes/arena_config/48Panel_4Bus.mat.i
+data/C codes for Panels/PanelCode/global.h.i
+data/C codes for Controller/XmegaController/handler.h.i
+data/Matlab Codes/functions/function_square_0.05hz_01per.mat.i
+data/Matlab Codes/test_scripts/jitterTesting_dataProcessing.m.i
+data/C codes for Panels/Bootloader4Panels/panel_bl.lss.i
+data/Matlab Codes/functions/position_function_sine_01Hz_100_pp_var.mat.i
+data/Matlab Codes/IO_tools/get_SD_drive.m.i
+data/C codes for Controller/XmegaController/panelcontroller.hex.d
+data/Matlab Codes/panel_control_paths.m.i
+data/Matlab Codes/Pattern_tools/ShiftMatrix.m.i
+data/Matlab Codes/controller/update_status_display.m.i
+data/Matlab Codes/Patterns/make_4x4_block_12Panels.m.i
+data/Matlab Codes/arena_config/choose_configs.m.i
+data/C codes for Controller/XmegaController/panelcontroller.hex.i
+data/Matlab Codes/Patterns/arena_config.m.i
+data/Matlab Codes/controller/SD.mat.i
+data/Matlab Codes/Pattern_tools/make_panel_bit_map.m.i
+data/Matlab Codes/test_scripts/testfreeze.m.i
+data/C codes for Controller/Bootloader4Controller/default/dep/sp_driver.o.d.i
+data/Matlab Codes/IO_tools/vec2dec_fast.m.i
+data/Matlab Codes/controller/play_current_pattern.fig.i
+data/Matlab Codes/functions/sign_mod.m.i
+data/C codes for Panels/PanelCode/avrlibtypes.h.i
+data/Matlab Codes/functions/position_function_sine_01Hz_50_pp.mat.i
+data/Matlab Codes/test_scripts/delay_time_analysis.m.i
+data/Matlab Codes/functions/function_sine_0.2hz.mat.i
+data/C codes for Controller/XmegaController/twi.c.i
+data/C codes for Panels/Bootloader4Panels/dep/bootloader.o.d.i
+data/C codes for Controller/Bootloader4Controller/default/dep/serial.o.d.i
+data/C codes for Controller/XmegaController/diskio.h.i
+data/C codes for Controller/Bootloader4Controller/defines.h.i
+data/Matlab Codes/functions/setFunction.m.i
+data/C codes for Controller/Bootloader4Controller/eeprom_driver.h.i
+data/Matlab Codes/functions/function_1p5_square_amp1_0.1hz_symmetric.mat.i
+data/Matlab Codes/Patterns/make_stripes_test_patterns.m.i
+data/Matlab Codes/controller/send_serial.m.i
+data/Matlab Codes/arena_config/default.mat.i
+data/Matlab Codes/Patterns/make_6_wide_stripe_patterns_48.m.i
+data/Matlab Codes/Patterns/Pattern_multi_width_optomotor_patterns_48_Pan.mat.i
+data/Matlab Codes/Pattern_tools/MakePat.m.i
+data/Matlab Codes/functions/function_square_amp2_0.1hz_symmetric.mat.i
+data/C codes for Panels/PanelCode/single_handler.h.i
+data/C codes for Panels/PanelCode/Panels.pnproj.i
+data/Matlab Codes/test_scripts/testDumpFrameJitter_gs3.m.i
+data/Matlab Codes/Patterns/make_8_wide_stripe_pattern_12.m.i
+data/Matlab Codes/functions/setFunction.fig.i
+data/C codes for Panels/PanelCode/panel_combined.hex.i
+data/Matlab Codes/functions/position_function_sine_01Hz_100_pp.mat.i
+data/C codes for Controller/XmegaController/eeprom_driver.h.i
+data/Matlab Codes/functions/function_square_0.05hz_10per.mat.i
+data/C codes for Panels/PanelCode/panel.hex.i
+data/C codes for Controller/XmegaController/handler.c.i
+data/C codes for Controller/Bootloader4Controller/eeprom_driver.c.i
+data/C codes for Panels/Bootloader4Panels/panel_bl.hex.i
+data/C codes for Controller/XmegaController/how-to.txt.i
+data/Matlab Codes/functions/function_square_0.1hz_02per.mat.i
+data/Matlab Codes/arena_config/cfg48Panel_4Bus.mat.i
+data/Matlab Codes/controller/Pattern_Player.m.i
+data/Matlab Codes/Patterns/make_multi_width_optomotor_patterns_48.m.i
+data/Matlab Codes/IO_tools/Make_pattern_vector_gs.m.i
+data/C codes for Controller/XmegaController/twi.h.i
+data/Matlab Codes/testfreeze.m.i
+data/Matlab Codes/Patterns/Pattern_testpattern.mat.i
+data/Matlab Codes/Pattern_tools/simple_expansion.m.i
+data/Matlab Codes/controller/char_to_signed_byte.m.i
+data/Matlab Codes/IO_tools/choose_functions.fig.i
+data/C codes for Controller/Bootloader4Controller/default/Makefile.i
+data/Matlab Codes/functions/setPosFunction.fig.i
+data/Matlab Codes/Patterns/Pattern_6_wide_stripes_48_Pan.mat.i
+data/C codes for Controller/Bootloader4Controller/default/BootloaderMkII_gcc.map.i
+data/C codes for Panels/PanelCode/makefile.i
+data/C codes for Controller/Bootloader4Controller/default/sourceLineMap.txt.i
+data/Matlab Codes/IO_tools/make_function_image.m.i
+data/Matlab Codes/arena_config/12Panel_4Bus.mat.i
+data/C codes for Controller/XmegaController/flash1152.bat.i
+data/Matlab Codes/functions/function_square_amp1_0.1hz_symmetric.mat.i
+data/Matlab Codes/test_scripts/Generate_Waveform_Agilent.m.i
+data/C codes for Controller/Bootloader4Controller/sp_driver.S.i
+data/Matlab Codes/IO_tools/choose_pats.fig.i
+data/Matlab Codes/controller/PControl.m.i
+data/Matlab Codes/IO_tools/Patterns.txt.i
+data/Matlab Codes/functions/function_sine_0.5hz_varlen.mat.i
+data/C codes for Controller/Bootloader4Controller/default/BootloaderMkII_gcc.hex.i
+data/C codes for Controller/XmegaController/ff.c.i
+data/C codes for Controller/Bootloader4Controller/serial.h.i
+data/Matlab Codes/controller/PControl.fig.i
+data/Matlab Codes/controller/SD_backup.mat.i
+data/Matlab Codes/controller/CF.mat.i
+data/Matlab Codes/functions/function_DC_0p1V.mat.i
+data/C codes for Controller/XmegaController/panelcontroller.elf.d
+data/Matlab Codes/controller/dec2char.m.i
+data/C codes for Controller/XmegaController/panelcontroller.elf.i
+data/Matlab Codes/Patterns/make_4x4_block_48.m.i
+data/Matlab Codes/experiment_scripts/Closed_Loop_random_patterns.m.i
+data/Matlab Codes/initialize_Pcontrol_paths.m.i
+data/Matlab Codes/functions/function_square_0.05hz_15per.mat.i
+data/C codes for Controller/XmegaController/xitoa.S.i
+data/Matlab Codes/functions/setPosFunction.m.i
+data/C codes for Controller/Bootloader4Controller/sp_driver.h.i
+data/C codes for Controller/XmegaController/main.h.i
+data/Matlab Codes/controller/old_send_serial.m.i
+data/C codes for Controller/XmegaController/uart.c.i
+data/C codes for Controller/XmegaController/rtc.c.i
+data/Matlab Codes/functions/function_square_0.2hz_50per.mat.i
+data/Matlab Codes/IO_tools/open_SD_image.m.i
+data/Matlab Codes/functions/function_square_2hz_50per.mat.i
+data/Matlab Codes/IO_tools/process_panel_map.m.i
+data/C codes for Controller/Bootloader4Controller/avr_compiler.h.i
+data/Matlab Codes/functions/make_position_func_script.m.i
+data/C codes for Panels/PanelCode/single_handler.c.i
+data/Matlab Codes/functions/function_square_amp5_0.1hz_symmetric.mat.i
+data/Matlab Codes/Patterns/make_gs_stripes_pattern_12.m.i
+data/Matlab Codes/functions/function_square_amp3_0.05hz_symmetric.mat.i
+data/C codes for Panels/Bootloader4Panels/panel_bl.map.i
+data/C codes for Panels/PanelCode/avrlibdefs.h.i
+data/C codes for Controller/XmegaController/rtc.h.i
+data/Matlab Codes/arena_config/setConfig.m.i
+data/Matlab Codes/functions/function_DC_zero.mat.i
+data/Matlab Codes/test_scripts/dump_check.m.i
+data/C codes for Controller/XmegaController/eeprom_driver.c.i
+data/C codes for Controller/XmegaController/timer.h.i
+data/Matlab Codes/test_scripts/PControllerUnitTesting.m.i
+data/C codes for Controller/XmegaController/Xmega_Controller.pnproj.i
+data/Matlab Codes/test_scripts/testDumpFrameJitter_gs1.m.i
+data/Matlab Codes/test_scripts/jitterTesting.m.i
+data/Matlab Codes/arena_config/setConfig.fig.i
+data/Matlab Codes/Patterns/Pattern_4x4_blocks_48.mat.i
+data/Matlab Codes/controller/signed_16Bit_to_char.m.i
+data/Matlab Codes/functions/function_DC_1V.mat.i
+data/Matlab Codes/arena_config/choose_configs.fig.i
+data/Matlab Codes/binvec2dec.m.i
+data/C codes for Controller/XmegaController/README.txt.i
+data/C codes for Controller/XmegaController/panelcontroller.map.i
+data/Matlab Codes/arena_config/arena.cfg.i
+data/C codes for Controller/XmegaController/uart.h.i
+data/C codes for Panels/PanelCode/panel.h.i
+data/C codes for Controller/XmegaController/flash.bat.i
+data/Matlab Codes/controller/setPattern.m.i
+data/Matlab Codes/binvec2dec_fast.m.i
+data/Matlab Codes/functions/function_square_0.05hz_symmetric.mat.i
+data/C codes for Panels/PanelCode/i2c.d.i
+data/Matlab Codes/controller/Pattern_Player.fig.i
+data/Matlab Codes/IO_tools/userInputSDDrive.m.i
+data/C codes for Controller/Bootloader4Controller/Flash_Defines.h.i
+data/Matlab Codes/Patterns.mat.i
+data/C codes for Controller/XmegaController/ff.h.i
+data/C codes for Controller/XmegaController/utils.h.i
+data/Matlab Codes/controller/report_status.fig.i
+data/C codes for Controller/XmegaController/mmc.c.i
+data/Matlab Codes/controller/init_serial.m.i
+data/Matlab Codes/controller/play_current_pattern.m.i
+data/Matlab Codes/arena_config/make_config_image.m.i
+data/C codes for Panels/PanelCode/i2c.c.i
+data/Matlab Codes/arena_config/cfgdefault.mat.i
+data/C codes for Panels/PanelCode/panel.c.i
+data/C codes for Controller/Bootloader4Controller/BootloaderMkII_gcc.aps.i
+data/C codes for Panels/PanelCode/i2cconf.h.i
+data/Matlab Codes/functions/function_square_amp3_0.1hz_symmetric.mat.i
+data/Matlab Codes/functions/function_square_amp5_0.05hz_symmetric.mat.i
+data/C codes for Controller/XmegaController/main.c.i
+data/C codes for Panels/Bootloader4Panels/bootloader.c.i
+data/C codes for Panels/Bootloader4Panels/doc8161.pdf.i
+data/Matlab Codes/Pattern_tools/makeBitMap.m.i
+data/Matlab Codes/IO_tools/Make_pattern_vector.m.i
+data/C codes for Panels/Bootloader4Panels/doc8161.pdf.d
+data/Matlab Codes/controller/Panel_com.m.i
+data/C codes for Controller/Bootloader4Controller/default/BootloaderMkII_gcc.eep.i
+data/Matlab Codes/controller/report_status.m.i
+data/Matlab Codes/functions/function_sine_0.05hz.mat.i
+data/C codes for Panels/PanelCode/single_handler.d.i
+data/C codes for Controller/XmegaController/panelcontroller.lst.d
+data/C codes for Controller/XmegaController/Xmega_controller.pnps.i
+data/C codes for Controller/XmegaController/panelcontroller.hextest.i
+data/Matlab Codes/Pattern_tools/Pattern_Repeater.m.i
+data/C codes for Controller/XmegaController/panelcontroller.lst.i
