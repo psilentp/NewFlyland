@@ -30,7 +30,7 @@ class FlyRecord(object):
         self.load_data()
         #window of when the trial begins and ends
         #self.epoch = pq.Quantity(5,'s')
-        self.clepoch = pq.Quantity(6,'s')
+        self.clepoch = pq.Quantity(5,'s')
         self.olepoch = pq.Quantity(1.2,'s')
         self.tail = pq.Quantity(.4,'s')
         self.left_window = int(self.clepoch/self.dt)
@@ -65,7 +65,7 @@ class FlyRecord(object):
         wingbeats = len(where(diff(where(self.signals['Sync'][start_ind:end_ind]<1,1,0))>0.5)[0])
         freq =  wingbeats/duration
         return freq
-        
+    
     def load_data(self):
         self.datafiles = os.listdir(self.datadir)
         self.abf_files = [f for f in self.datafiles if '.abf' in f]
@@ -285,7 +285,25 @@ def plot_ephys_sweep(fly,findex,pindex,sweepnum):
     plot(times,fly['RightWing',findex,pindex][sweepnum][-12000:-6000])
     return fig
  """
+
+def get_spiketrain(self,asig):
+    """get the spiketrain associated with an asig return the spike train in 
+    neo's spiketrain format"""
+    sweep = array(asig)
+    #first filter the sweep
+    filtered = np.array(sweep) - medfilt(sweep,51)
+    #find the peaks - come up with something better than hard coded params
+    pks = find_peaks_cwt(filtered,np.arange(9,15))
+    #allocate memory for an array of offsets corresponding to the index
+    #difference of the max amplitude from the index returned (within window)
+    offsets = np.zeros_like(pks)
+    datamtrx = np.zeros(shape= (60,len(pks[3:])))
     
+    for i,pk in enumerate(pks[3:]):
+        offset = np.argmax(filtered[pk-30:pk+30])-30
+        datamtrx[:,i] = filtered[pk-30+offset:pk+30+offset]
+        offsets[i+3] = offset
+        
 
 def get_signal_mean(signal_list):
     """calculate the average signal from a list of signals"""
