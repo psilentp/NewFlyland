@@ -29,10 +29,12 @@ class FlyRecord(object):
         self.rep_ind = rep_ind
         self.load_data()
         #window of when the trial begins and ends
-        self.epoch = pq.Quantity(5,'s')
+        #self.epoch = pq.Quantity(5,'s')
+        self.clepoch = pq.Quantity(6,'s')
+        self.olepoch = pq.Quantity(1.2,'s')
         self.tail = pq.Quantity(.4,'s')
-        self.left_window = int(self.epoch/self.dt)
-        self.right_window = int(self.epoch/self.dt + self.tail/self.dt)
+        self.left_window = int(self.clepoch/self.dt)
+        self.right_window = int(self.olepoch/self.dt + self.tail/self.dt)
         self.min_wbf = pq.Quantity(150.0,'Hz')
     
     def __getitem__(self,k):
@@ -47,13 +49,14 @@ class FlyRecord(object):
             end_ind = self.trial_start_indicies[x]+self.right_window
             if self.get_wbf(start_ind,end_ind) > self.min_wbf:
                 #shift the start and end ind to correct for the actual collision time.
-                icol = where(self.signals['Xpos'][self.trial_start_indicies[x]+1000:end_ind] >= ol_volts_per_deg*89.5)[0][0]
-                offset = icol - self.left_window + 1000
+                icol = where(self.signals['Xpos'][self.trial_start_indicies[x]+5000:end_ind] >= ol_volts_per_deg*89.5)[0][0]
+                offset = icol + 5000 - floor(int(self.olepoch/self.dt)) - 1
                 start_ind += offset
                 end_ind += offset
                 retlist.append(self.signals[sigkey][start_ind:end_ind])
         for sig in retlist:
-            sig.t_start = -2*(self.epoch)
+            #set the start time correcting for rounding errors
+            sig.t_start = -1*(int(self.clepoch/self.dt)+int(self.olepoch/self.dt)+1)*self.dt#-2*(self.epoch)
         #print [s.t_start for s in retlist]
         return retlist
     
@@ -84,7 +87,7 @@ class FlyRecord(object):
             self.signals[sig_name] = seg.analogsignals[index]
         #pull out the trial start indicies
         self.dt = self.signals['Sync'].times[1]
-        self.trial_start_indicies = where(diff(where(seg.analogsignals[-2] <1,1,0))>0)[0]
+        self.trial_start_indicies = where(diff(where(self.signals['Ypos'] <1,1,0))>0)[0]
         
         
     def plot_trialtype(self, signal_key, function_index, position_index,plot_range,transform = None):
@@ -132,52 +135,143 @@ class FlyRecord(object):
         ave = reduce(lambda x,y:x+y,siglist)/len(siglist)  
         return ave
 
+    def plot_closed_loop_summary(self):
+        flynum = self.fly_number
+        include_start = pq.Quantity(-7,'s')
+        include_end = pq.Quantity(-5.5,'s')
+        include_window = (include_start,include_end)
+    
+        fig = figure(figsize = (8,11))
+        ax1 = subplot(6,2,1)
+        ax2 = subplot(6,2,2,sharex = ax1)
+        count = 3
+        for findex in range(5):
+            for pindex in [4,10]:
+                if pindex == 4:
+                    ax1 = subplot(6,2,1)
+                else:
+                    ax2 = subplot(6,2,2)
+                
+                ax3 = subplot(6,2,count,polar = True)
+                self.plot_closedloop(findex+1,pindex+1,include_window)
+                [x.set_visible(False) for x in ax3.get_xticklabels()]
+                [x.set_visible(False) for x in ax3.get_yticklabels()]
+                count += 1
 
+        ax1.set_title('pole =  90')
+        ax2.set_title('pole = -90')
+        return fig
+    
+    def get_closed_loop_histogram(self,savefig = False):
+        flynum = self.fly_number
+        include_start = pq.Quantity(-7,'s')
+        include_end = pq.Quantity(-5.0,'s')
+        #include_window = (include_start,incl  de_end)
+        sig_zero = self['Xpos',1,5][0]
+        st = np.argwhere(sig_zero.times<include_start)[-1]
+        en = np.argwhere(sig_zero.times<include_end)[-1]
+        #np.concatenate([fix_transform(x[st:en]) for x in siglist]
+        siglist = list()
+        for findex in range(1,6):
+            for pindex in [5,11]:
+                siglist.extend([fix_transform(x[st:en]) for x in self['Xpos',findex,pindex]])
+        return np.histogram(np.concatenate(siglist),bins = 94,density = True)
+    
+    def plot_ephys_sweep(self,findex,pindex,sweepnum):
+        times = self['AMsysCh1',findex,pindex][sweepnum].times[-12000:-6000]
+        fig = figure(figsize=(6,12))
+        ax1 = subplot(3,1,1)
+        plot(times,expan_transform(self['Xpos',findex,pindex][sweepnum][-12000:-6000]))
+        ax2 = subplot(3,1,2,sharex = ax1)
+        plot(times,self['AMsysCh1',findex,pindex][sweepnum][-12000:-6000])
+        ax3 = subplot(3,1,3,sharex = ax1)
+        plot(times,self['LeftWing',findex,pindex][sweepnum][-12000:-6000])
+        plot(times,self['RightWing',findex,pindex][sweepnum][-12000:-6000])
+        return fig 
+    
+    def plot_ephys_summary(self):
+        flynum = self.fly_number
+        plot_start = pq.Quantity(-0.5,'s')
+        plot_end = pq.Quantity(0.2,'s')
+        plot_window = (plot_start,plot_end)
+        fig = figure(figsize = (10,6))
+        ax1 = subplot(6,2,1)
+        ax2 = subplot(6,2,2,sharex = ax1)
+     
+        count = 3
+        for findex in range(5):
+            for pindex in [4,10]:
+                if pindex == 4:
+                    ax1 = subplot(6,2,1)
+                else:
+                    ax2 = subplot(6,2,2)
+                self.plot_trialtype('Xpos',findex+1,pindex+1,(plot_window[0],plot_window[1]),transform = expan_transform)
+                ax3 = subplot(6,2,count,sharex = ax1)
+                self.plot_trialtype('AMsysCh1',findex+1,pindex+1,(plot_window[0],plot_window[1]))
+                if pindex == 4:
+                    ax3.set_ylabel('l/v =%s ms'%(L_V_lookup[findex+1]))
+                ax3.set_ybound(-25,25)
+                ax1.set_xbound(float(plot_start),float(plot_end))
+                ax1.set_ybound(0,95)
+                ax2.set_xbound(float(plot_start),float(plot_end))
+                ax2.set_ybound(0,95)
+                count +=1
+
+        ax1.set_title('pole =  90')
+        ax2.set_title('pole = -90')
+        suptitle('Fly%s'%(flynum))
+        return fig
+    
+    def plot_fly_summary(self):
+        flynum = self.fly_number
+
+        plot_start = pq.Quantity(-5,'s')
+        plot_end = pq.Quantity(0.5,'s')
+    
+        plot_window = (plot_start,plot_end)
+
+        fig = figure(figsize = (8,11))
+        ax1 = subplot(6,2,1)
+        ax2 = subplot(6,2,2,sharex = ax1)
+        
+        count = 3
+        for findex in range(5):
+            for pindex in [4,10]:
+                if pindex == 4:
+                    ax1 = subplot(6,2,1)
+                else:
+                    ax2 = subplot(6,2,2)
+                self.plot_trialtype('Xpos',findex+1,pindex+1,(plot_window[0],plot_window[1]),transform = expan_transform)
+                ax3 = subplot(6,2,count,sharex = ax1)
+                self.plot_trialtype('L_m_R',findex+1,pindex+1,(plot_window[0],plot_window[1]))
+                if pindex == 4:
+                    ax3.set_ylabel('l/v =%s ms'%(L_V_lookup[findex+1]))
+                ax3.set_ybound(-10,10)
+                ax1.set_xbound(float(plot_start),float(plot_end))
+                ax1.set_ybound(0,95)
+                ax2.set_xbound(float(plot_start),float(plot_end))
+                ax2.set_ybound(0,95)
+                count +=1
+
+        ax1.set_title('pole =  90')
+        ax2.set_title('pole = -90')
+        suptitle('Fly%s'%(flynum))
+        return fig
+    
+    def make_ol_ave(self,ave_start,ave_end):
+        datastorage = dict()
+        #fly = FlyRecord(flynum,repindex,dataroot)
+        ave_window = (ave_start,ave_end)
+        for findex in range(5):
+            for pindex in [4,10]:
+                datastorage['Xpos',findex+1,pindex+1] = self.calculate_average('Xpos',findex+1,pindex+1,ave_window,transform = expan_transform)
+                datastorage['L_m_R',findex+1,pindex+1] = self.calculate_average('L_m_R',findex+1,pindex+1,ave_window)
+        return datastorage
+    
 ##plotting
 
-def get_closed_loop_histogram(fly,savefig = False):
-    flynum = fly.fly_number
-    include_start = pq.Quantity(-7,'s')
-    include_end = pq.Quantity(-5.0,'s')
-    #include_window = (include_start,incl  de_end)
-    sig_zero = fly['Xpos',1,5][0]
-    st = np.argwhere(sig_zero.times<include_start)[-1]
-    en = np.argwhere(sig_zero.times<include_end)[-1]
-    #np.concatenate([fix_transform(x[st:en]) for x in siglist]
-    siglist = list()
-    for findex in range(1,6):
-        for pindex in [5,11]:
-            siglist.extend([fix_transform(x[st:en]) for x in fly['Xpos',findex,pindex]])
-    return np.histogram(np.concatenate(siglist),bins = 94,density = True)
-    
 
-def plot_closed_loop_summary(fly):
-    
-    flynum = fly.fly_number
-    include_start = pq.Quantity(-7,'s')
-    include_end = pq.Quantity(-5.5,'s')
-    include_window = (include_start,include_end)
-    
-    fig = figure(figsize = (8,11))
-    ax1 = subplot(6,2,1)
-    ax2 = subplot(6,2,2,sharex = ax1)
-    count = 3
-    for findex in range(5):
-        for pindex in [4,10]:
-            if pindex == 4:
-                ax1 = subplot(6,2,1)
-            else:
-                ax2 = subplot(6,2,2)
-            
-            ax3 = subplot(6,2,count,polar = True)
-            fly.plot_closedloop(findex+1,pindex+1,include_window)
-            [x.set_visible(False) for x in ax3.get_xticklabels()]
-            [x.set_visible(False) for x in ax3.get_yticklabels()]
-            count +=1
 
-    ax1.set_title('pole =  90')
-    ax2.set_title('pole = -90')
-    return fig
 """
 def plot_ephys_sweep(fly,findex,pindex,sweepnum):
     times = fly['AMsysCh1',findex,pindex][sweepnum].times[-12000:-6000]
@@ -191,98 +285,6 @@ def plot_ephys_sweep(fly,findex,pindex,sweepnum):
     plot(times,fly['RightWing',findex,pindex][sweepnum][-12000:-6000])
     return fig
  """
- 
-def plot_ephys_sweep(fly,findex,pindex,sweepnum):
-    times = fly['AMsysCh1',findex,pindex][sweepnum].times[-12000:-6000]
-    fig = figure(figsize=(6,12))
-    ax1 = subplot(3,1,1)
-    plot(times,expan_transform(fly['Xpos',findex,pindex][sweepnum][-12000:-6000]))
-    ax2 = subplot(3,1,2,sharex = ax1)
-    plot(times,fly['AMsysCh1',findex,pindex][sweepnum][-12000:-6000])
-    ax3 = subplot(3,1,3,sharex = ax1)
-    plot(times,fly['LeftWing',findex,pindex][sweepnum][-12000:-6000])
-    plot(times,fly['RightWing',findex,pindex][sweepnum][-12000:-6000])
-    return fig 
- 
-   
-def plot_ephys_summary(fly):
-    flynum = fly.fly_number
-    plot_start = pq.Quantity(-0.5,'s')
-    plot_end = pq.Quantity(0.2,'s')
-    plot_window = (plot_start,plot_end)
-    fig = figure(figsize = (10,6))
-    ax1 = subplot(6,2,1)
-    ax2 = subplot(6,2,2,sharex = ax1)
-     
-    count = 3
-    for findex in range(5):
-        for pindex in [4,10]:
-            if pindex == 4:
-                ax1 = subplot(6,2,1)
-            else:
-                ax2 = subplot(6,2,2)
-            fly.plot_trialtype('Xpos',findex+1,pindex+1,(plot_window[0],plot_window[1]),transform = expan_transform)
-            ax3 = subplot(6,2,count,sharex = ax1)
-            fly.plot_trialtype('AMsysCh1',findex+1,pindex+1,(plot_window[0],plot_window[1]))
-            if pindex == 4:
-                ax3.set_ylabel('l/v =%s ms'%(L_V_lookup[findex+1]))
-            ax3.set_ybound(-25,25)
-            ax1.set_xbound(float(plot_start),float(plot_end))
-            ax1.set_ybound(0,95)
-            ax2.set_xbound(float(plot_start),float(plot_end))
-            ax2.set_ybound(0,95)
-            count +=1
-
-    ax1.set_title('pole =  90')
-    ax2.set_title('pole = -90')
-    suptitle('Fly%s'%(flynum))
-    return fig
-      
-def plot_fly_summary(fly):
-    flynum = fly.fly_number
-
-    plot_start = pq.Quantity(-5,'s')
-    plot_end = pq.Quantity(0.5,'s')
-    
-    plot_window = (plot_start,plot_end)
-
-    fig = figure(figsize = (8,11))
-    ax1 = subplot(6,2,1)
-    ax2 = subplot(6,2,2,sharex = ax1)
-    
-    count = 3
-    for findex in range(5):
-        for pindex in [4,10]:
-            if pindex == 4:
-                ax1 = subplot(6,2,1)
-            else:
-                ax2 = subplot(6,2,2)
-            fly.plot_trialtype('Xpos',findex+1,pindex+1,(plot_window[0],plot_window[1]),transform = expan_transform)
-            ax3 = subplot(6,2,count,sharex = ax1)
-            fly.plot_trialtype('L_m_R',findex+1,pindex+1,(plot_window[0],plot_window[1]))
-            if pindex == 4:
-                ax3.set_ylabel('l/v =%s ms'%(L_V_lookup[findex+1]))
-            ax3.set_ybound(-10,10)
-            ax1.set_xbound(float(plot_start),float(plot_end))
-            ax1.set_ybound(0,95)
-            ax2.set_xbound(float(plot_start),float(plot_end))
-            ax2.set_ybound(0,95)
-            count +=1
-
-    ax1.set_title('pole =  90')
-    ax2.set_title('pole = -90')
-    suptitle('Fly%s'%(flynum))
-    return fig
-
-def make_ol_ave(fly,ave_start,ave_end):
-    datastorage = dict()
-    #fly = FlyRecord(flynum,repindex,dataroot)
-    ave_window = (ave_start,ave_end)
-    for findex in range(5):
-        for pindex in [4,10]:
-            datastorage['Xpos',findex+1,pindex+1] = fly.calculate_average('Xpos',findex+1,pindex+1,ave_window,transform = expan_transform)
-            datastorage['L_m_R',findex+1,pindex+1] = fly.calculate_average('L_m_R',findex+1,pindex+1,ave_window)
-    return datastorage
     
 
 def get_signal_mean(signal_list):
