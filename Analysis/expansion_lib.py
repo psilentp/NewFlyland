@@ -5,6 +5,7 @@ import scipy.io as sio
 import quantities as pq
 from pylab import *
 import numpy as np
+from scipy.signal import medfilt,find_peaks_cwt
 
 #fly_number = 1
 #rep_ind = 0
@@ -286,25 +287,43 @@ def plot_ephys_sweep(fly,findex,pindex,sweepnum):
     return fig
  """
 
-def get_spiketrain(self,asig):
+def ts(sweep,start,stop):
+    sta_index = argwhere(sweep.times <start)[-1]
+    stp_index = argwhere(sweep.times <stop)[-1]
+    return neo.AnalogSignal(sweep[103999:131998],
+                            t_start = sweep.times[103999],
+                            sampling_rate = sweep.sampling_rate)
+    
+def get_spiketrain(sweep):
     """get the spiketrain associated with an asig return the spike train in 
     neo's spiketrain format"""
-    sweep = array(asig)
+    #sweep = array(asig)
     #first filter the sweep
     filtered = np.array(sweep) - medfilt(sweep,51)
     #find the peaks - come up with something better than hard coded params
-    pks = find_peaks_cwt(filtered,np.arange(9,15))
+    pks = find_peaks_cwt(filtered,np.arange(9,15))[3:]
     #allocate memory for an array of offsets corresponding to the index
     #difference of the max amplitude from the index returned (within window)
     offsets = np.zeros_like(pks)
-    datamtrx = np.zeros(shape= (60,len(pks[3:])))
-    
-    for i,pk in enumerate(pks[3:]):
+    #datamtrx = np.zeros(shape= (60,len(pks)))
+    waveforms = list()
+    for i,pk in enumerate(pks):
         offset = np.argmax(filtered[pk-30:pk+30])-30
-        datamtrx[:,i] = filtered[pk-30+offset:pk+30+offset]
-        offsets[i+3] = offset
+        #datamtrx[:,i] = filtered[pk-30+offset:pk+30+offset]
+        waveforms.append(sweep[pk-30+offset:pk+30+offset])
+        offsets[i] = offset
         
-
+    actual_pks = [p+offset for p,offset in zip(pks,offsets)]
+    sweep.sampling_period.units = 's'
+    pks = pq.Quantity([pk*sweep.sampling_period + sweep.t_start for pk in actual_pks])
+    spike_train = neo.SpikeTrain(pks,
+                                sweep.t_stop,
+                                sampling_rage = sweep.sampling_rate,
+                                waveforms = waveforms,
+                                left_sweep = 30*sweep.sampling_period,
+                                t_start = sweep.t_start)
+    return spike_train
+    
 def get_signal_mean(signal_list):
     """calculate the average signal from a list of signals"""
     #print signal_list
@@ -371,6 +390,31 @@ def calculate_groupwise_means(flylist = []):
             stde_matrix['L_m_R',findex+1,pindex+1] = get_signal_stderr(group_matrix['L_m_R',findex+1,pindex+1],signal_mean = average_matrix['L_m_R',findex+1,pindex+1])
     return average_matrix,stde_matrix,group_matrix
 
+
+def raster(event_times_list, color='k'):
+    """
+    Creates a raster plot
+ 
+    Parameters
+    ----------
+    event_times_list : iterable
+                       a list of event time iterables
+    color : string
+            color of vlines
+ 
+    Returns
+    -------
+    ax : an axis containing the raster plot
+    
+    from http://scimusing.wordpress.com/2013/05/06/making-raster-plots-in-python-with-matplotlib/
+    """
+    ax = plt.gca()
+    for ith, trial in enumerate(event_times_list):
+        plt.vlines(trial, ith + .5, ith + 1.5, color=color)
+    plt.ylim(.5, len(event_times_list) + .5)
+    return ax
+    
+    
 #code to plot l/|v| vs tcol - need to fix so time runs backwards.
 #filtered = [psf.get_low_filter(amtrx['L_m_R',x,5],50) for x in range(1,6)]
 #filtered2 = [psf.get_low_filter(amtrx['L_m_R',x,11],50) for x in range(1,6)]
