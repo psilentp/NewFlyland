@@ -39,11 +39,18 @@ class FlyRecord(object):
         self.min_wbf = pq.Quantity(150.0,'Hz')
     
     def __getitem__(self,k):
-        sigkey = k[0]
-        function_index = k[1]
-        position_index = k[2]
-        selected_trials_indices = [rps[0] for rps in self.trial_matrix if rps[1] == function_index and rps[2] == position_index]
+        function_index = k[0]
+        position_index = k[1]
+        sli = k[2]
+        sigkey = k[3]
+        #try:
+        #    sli = k[3]
+        #except IndexError:
+        #    pass
         retlist = list()
+        selected_trials_indices = [rps[0] for rps in self.trial_matrix if rps[1] == function_index and rps[2] == position_index][sli]
+        if not(type(selected_trials_indices) is list):
+            selected_trials_indices = [selected_trials_indices]
         for x in selected_trials_indices:
             #first get the section presumed to include t-collision
             start_ind = self.trial_start_indicies[x]-self.left_window
@@ -60,6 +67,8 @@ class FlyRecord(object):
             sig.t_start = -1*(int(self.clepoch/self.dt)+int(self.olepoch/self.dt)+1)*self.dt#-2*(self.epoch)
         #print [s.t_start for s in retlist]
         return retlist
+    
+    #def extract_trial_spikes(self,
     
     def get_wbf(self,start_ind,end_ind):
         duration = (end_ind-start_ind)*self.signals['Sync'].times[1]
@@ -92,7 +101,9 @@ class FlyRecord(object):
         
         
     def plot_trialtype(self, signal_key, function_index, position_index,plot_range,transform = None):
-        siglist = self.__getitem__((signal_key,function_index,position_index))
+        siglist = self[function_index,position_index,:,signal_key]
+        #print siglist[0].times
+        #siglist = self.__getitem__((signal_key,function_index,position_index))
         st = np.argwhere(siglist[0].times<plot_range[0])[-1]
         en = np.argwhere(siglist[0].times<plot_range[1])[-1]
         if signal_key == 'AMsysCh1':
@@ -110,23 +121,23 @@ class FlyRecord(object):
             ave = reduce(lambda x,y:x+y,siglist)/len(siglist)
             plot(ave.times[::downsamp],ave[::downsamp],color = 'r')
         else:
-            new_siglist = self.__getitem__(('L_m_R',function_index,position_index))
+            new_siglist = self[function_index,position_index,:,'L_m_R']
+            #new_siglist = self.__getitem__(('L_m_R',function_index,position_index))
             ave = reduce(lambda x,y:x+y,new_siglist)/len(new_siglist)
             plot(ave.times[::downsamp],ave[::downsamp]*2,color = 'r')
     
     def plot_closedloop(self,function_index,position_index,plot_range):
-        siglist = self.__getitem__(('Xpos',function_index,position_index))
+        #siglist = self.__getitem__(('Xpos',function_index,position_index))
+        siglist = self[function_index,position_index,:,'Xpos']
         st = np.argwhere(siglist[0].times<plot_range[0])[-1]
         en = np.argwhere(siglist[0].times<plot_range[1])[-1]
         data = np.concatenate([fix_transform(x[st:en]) for x in siglist])
         hist(data,bins= 369,alpha = 0.5,normed = True)
-        #for sig in siglist:
-        #    hist(fix_transform(sig[st:en]),bins= 369,alpha = 0.5,normed = True)
-       
-        #hist(data,bins=360)        
+   
         
     def calculate_average(self, signal_key, function_index, position_index,ave_range,transform = None):
-        siglist = self.__getitem__((signal_key,function_index,position_index))
+        #siglist = self.__getitem__((signal_key,function_index,position_index))
+        siglist = self[function_index,position_index,:,signal_key]
         st = np.argwhere(siglist[0].times<ave_range[0])[-1]
         en = np.argwhere(siglist[0].times<ave_range[1])[-1]
         if transform:
@@ -168,26 +179,27 @@ class FlyRecord(object):
         include_start = pq.Quantity(-7,'s')
         include_end = pq.Quantity(-5.0,'s')
         #include_window = (include_start,incl  de_end)
-        sig_zero = self['Xpos',1,5][0]
+        #sig_zero = self['Xpos',1,5][0]
+        sig_zero = self[1,5,0,'Xpos'][0]
         st = np.argwhere(sig_zero.times<include_start)[-1]
         en = np.argwhere(sig_zero.times<include_end)[-1]
         #np.concatenate([fix_transform(x[st:en]) for x in siglist]
         siglist = list()
         for findex in range(1,6):
             for pindex in [5,11]:
-                siglist.extend([fix_transform(x[st:en]) for x in self['Xpos',findex,pindex]])
+                siglist.extend([fix_transform(x[st:en]) for x in self[findex,pindex,:,'Xpos']])
         return np.histogram(np.concatenate(siglist),bins = 94,density = True)
     
     def plot_ephys_sweep(self,findex,pindex,sweepnum):
-        times = self['AMsysCh1',findex,pindex][sweepnum].times[-12000:-6000]
+        times = self[findex,pindex:,'AMsysCh1'][sweepnum].times[-12000:-6000]
         fig = figure(figsize=(6,12))
         ax1 = subplot(3,1,1)
-        plot(times,expan_transform(self['Xpos',findex,pindex][sweepnum][-12000:-6000]))
+        plot(times,expan_transform(self[findex,pindex,:,'Xpos'][sweepnum][-12000:-6000]))
         ax2 = subplot(3,1,2,sharex = ax1)
-        plot(times,self['AMsysCh1',findex,pindex][sweepnum][-12000:-6000])
+        plot(times,self[findex,pindex,:,'AMsysCh1'][sweepnum][-12000:-6000])
         ax3 = subplot(3,1,3,sharex = ax1)
-        plot(times,self['LeftWing',findex,pindex][sweepnum][-12000:-6000])
-        plot(times,self['RightWing',findex,pindex][sweepnum][-12000:-6000])
+        plot(times,self[findex,pindex,:,'LeftWing'][sweepnum][-12000:-6000])
+        plot(times,self[findex,pindex,:,'RightWing'][sweepnum][-12000:-6000])
         return fig 
     
     def plot_ephys_summary(self):
@@ -391,7 +403,7 @@ def calculate_groupwise_means(flylist = []):
     return average_matrix,stde_matrix,group_matrix
 
 
-def raster(event_times_list, color='k'):
+def raster(event_times_list, colors_list = None):
     """
     Creates a raster plot
  
@@ -408,13 +420,13 @@ def raster(event_times_list, color='k'):
     
     from http://scimusing.wordpress.com/2013/05/06/making-raster-plots-in-python-with-matplotlib/
     """
+    
     ax = plt.gca()
-    for ith, trial in enumerate(event_times_list):
+    for ith, trial,color in zip(range(len(event_times)),event_times_list,colors_list):
         plt.vlines(trial, ith + .5, ith + 1.5, color=color)
     plt.ylim(.5, len(event_times_list) + .5)
     return ax
-    
-    
+
 #code to plot l/|v| vs tcol - need to fix so time runs backwards.
 #filtered = [psf.get_low_filter(amtrx['L_m_R',x,5],50) for x in range(1,6)]
 #filtered2 = [psf.get_low_filter(amtrx['L_m_R',x,11],50) for x in range(1,6)]
