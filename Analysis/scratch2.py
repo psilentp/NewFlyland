@@ -55,7 +55,7 @@ def plot_trial_spktrns(indx = 5):
     plb.show()
     return inc_trains
 
-
+#plot(sweep.times,sweep,color = 'k');[plot(x.times,x,color = cm.jet(c/(2*pi)),lw =2,alpha =0.7) for x,c in zip(inc_trains[0].waveforms,inc_trains[0].annotations['phases'])]
 #plot(sweep.times,sweep);[plot(x.times,x,color = 'r',lw =4,alpha =0.5) for x in inc_trains[0].waveforms]
 """
 ###########################
