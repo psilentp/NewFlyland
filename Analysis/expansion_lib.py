@@ -6,6 +6,7 @@ import quantities as pq
 from pylab import *
 import numpy as np
 from scipy.signal import medfilt,find_peaks_cwt
+import pylab as plb
 
 #fly_number = 1
 #rep_ind = 0
@@ -68,8 +69,21 @@ class FlyRecord(object):
         #print [s.t_start for s in retlist]
         return retlist
     
-    #def extract_trial_spikes(self,
-    
+    def extract_trial_spikes(self,function_index, position_index,trial_num,start,stop):
+        from scipy.signal import hilbert
+        L_h = self[function_index,position_index,trial_num,'LeftWing'][0]
+        R_h = self[function_index,position_index,trial_num,'RightWing'][0]
+        #start_ind = int(start/L_h.sampling_period)
+        #stop_ind = int(stop/L_h.sampling_period)
+        start_ind = np.argwhere(L_h.times>start)[0]
+        stop_ind = np.argwhere(L_h.times>stop)[0]
+        #phases = np.angle(hilbert(get_low_filter(L_h+R_h,500)))
+        phases = get_phase_trace(L_h[start_ind:stop_ind],R_h[start_ind:stop_ind])
+        spk_train = get_spiketrain(self[function_index,position_index,trial_num,'AMsysCh1'][0][start_ind:stop_ind])
+        spk_ind = spk_train.annotations['pk_ind']
+        spk_train.annotations['phases'] = phases[spk_ind]
+        return spk_train
+        
     def get_wbf(self,start_ind,end_ind):
         duration = (end_ind-start_ind)*self.signals['Sync'].times[1]
         wingbeats = len(where(diff(where(self.signals['Sync'][start_ind:end_ind]<1,1,0))>0.5)[0])
@@ -98,7 +112,6 @@ class FlyRecord(object):
         #pull out the trial start indicies
         self.dt = self.signals['Sync'].times[1]
         self.trial_start_indicies = where(diff(where(self.signals['Ypos'] <1,1,0))>0)[0]
-        
         
     def plot_trialtype(self, signal_key, function_index, position_index,plot_range,transform = None):
         siglist = self[function_index,position_index,:,signal_key]
@@ -283,7 +296,11 @@ class FlyRecord(object):
     
 ##plotting
 
-
+#def get_phase_trace(L_h,R_h)
+#    from scipy import hilbert
+#    phases = np.angle(hilbert(get_low_filter(L_h+R_h,500)))
+    
+    
 
 """
 def plot_ephys_sweep(fly,findex,pindex,sweepnum):
@@ -299,13 +316,32 @@ def plot_ephys_sweep(fly,findex,pindex,sweepnum):
     return fig
  """
 
+
+    
 def ts(sweep,start,stop):
     sta_index = argwhere(sweep.times <start)[-1]
     stp_index = argwhere(sweep.times <stop)[-1]
     return neo.AnalogSignal(sweep[103999:131998],
                             t_start = sweep.times[103999],
                             sampling_rate = sweep.sampling_rate)
-    
+
+def get_phase_trace(L_h,R_h):
+    from scipy.signal import hilbert,find_peaks_cwt
+    phases = np.angle(hilbert(get_low_filter(L_h+R_h,500)))
+    pks = find_peaks_cwt(L_h+R_h,np.arange(10,20))
+    newpks = recondition_peaks(L_h+R_h,pks)
+    phase_shift = np.mean(phases[newpks])
+    phases = np.mod(np.unwrap(phases)-phase_shift,2*np.pi)
+    return phases
+
+def recondition_peaks(signal,pks):
+    newpks = list()
+    for pk in pks:
+        offset = np.argmax(signal[pk-10:pk+10])
+        newpks.append(pk-10+offset)
+    return newpks
+        
+              
 def get_spiketrain(sweep):
     """get the spiketrain associated with an asig return the spike train in 
     neo's spiketrain format"""
@@ -325,15 +361,16 @@ def get_spiketrain(sweep):
         waveforms.append(sweep[pk-30+offset:pk+30+offset])
         offsets[i] = offset
         
-    actual_pks = [p+offset for p,offset in zip(pks,offsets)]
+    pk_ind = [p+offset for p,offset in zip(pks,offsets)]
     sweep.sampling_period.units = 's'
-    pks = pq.Quantity([pk*sweep.sampling_period + sweep.t_start for pk in actual_pks])
-    spike_train = neo.SpikeTrain(pks,
+    pk_tms = pq.Quantity([pk*sweep.sampling_period + sweep.t_start for pk in pk_ind])
+    spike_train = neo.SpikeTrain(pk_tms,
                                 sweep.t_stop,
-                                sampling_rage = sweep.sampling_rate,
+                                sampling_rate = sweep.sampling_rate,
                                 waveforms = waveforms,
                                 left_sweep = 30*sweep.sampling_period,
-                                t_start = sweep.t_start)
+                                t_start = sweep.t_start,
+                                pk_ind = pk_ind)
     return spike_train
     
 def get_signal_mean(signal_list):
@@ -402,8 +439,14 @@ def calculate_groupwise_means(flylist = []):
             stde_matrix['L_m_R',findex+1,pindex+1] = get_signal_stderr(group_matrix['L_m_R',findex+1,pindex+1],signal_mean = average_matrix['L_m_R',findex+1,pindex+1])
     return average_matrix,stde_matrix,group_matrix
 
+def phase_raster(event_times_list,phase_list):
+    ax = plb.gca()
+    for ith,trial in enumerate(zip(event_times_list,phase_list)):
+        colors = plb.cm.hot(trial[1]/(2*np.pi))
+        plb.vlines(trial[0],ith + 0.5, ith+ 1.5,color = colors)
+    return ax
 
-def raster(event_times_list, colors_list = None):
+def raster(event_times_list, color = 'k'):
     """
     Creates a raster plot
  
@@ -422,7 +465,7 @@ def raster(event_times_list, colors_list = None):
     """
     
     ax = plt.gca()
-    for ith, trial,color in zip(range(len(event_times)),event_times_list,colors_list):
+    for ith, trial in enumerate(event_times_list):
         plt.vlines(trial, ith + .5, ith + 1.5, color=color)
     plt.ylim(.5, len(event_times_list) + .5)
     return ax
