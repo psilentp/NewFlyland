@@ -349,7 +349,7 @@ def get_spiketrain(sweep):
     #first filter the sweep
     filtered = np.array(sweep) - medfilt(sweep,51)
     #find the peaks - come up with something better than hard coded params
-    pks = find_peaks_cwt(filtered,np.arange(9,15))[3:]
+    pks = find_peaks_cwt(filtered,np.arange(30,45),min_snr = 0.05)[3:]
     #allocate memory for an array of offsets corresponding to the index
     #difference of the max amplitude from the index returned (within window)
     offsets = np.zeros_like(pks)
@@ -372,7 +372,23 @@ def get_spiketrain(sweep):
                                 t_start = sweep.t_start,
                                 pk_ind = pk_ind)
     return spike_train
+
+def sort_spikes(wv_mtrx):
+    from scipy.linalg import svd
+    from scipy.cluster.vq import kmeans2
     
+    U,s,Vt = svd(wv_mtrx,full_matrices=False)
+    V = Vt.T
+
+    ind = np.argsort(s)[::-1]
+    U = U[:,ind]
+    s = s[ind]
+    V = V[:,ind]
+
+    features = U
+    es, idx = kmeans2(features[:,0:2],2,iter=50)
+    return idx,features,U
+
 def get_signal_mean(signal_list):
     """calculate the average signal from a list of signals"""
     #print signal_list
@@ -442,7 +458,7 @@ def calculate_groupwise_means(flylist = []):
 def phase_raster(event_times_list,phase_list):
     ax = plb.gca()
     for ith,trial in enumerate(zip(event_times_list,phase_list)):
-        colors = plb.cm.hot(trial[1]/(2*np.pi))
+        colors = plb.cm.jet(trial[1]/(2*np.pi))
         plb.vlines(trial[0],ith + 0.5, ith+ 1.5,color = colors)
     return ax
 
