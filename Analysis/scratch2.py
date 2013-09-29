@@ -21,13 +21,16 @@ def plot_trial_spktrns(indx = 5):
             spiketrains.append(fly.extract_trial_spikes(2,indx,x,-1,0.2))
         except IndexError:
             pass
-    plb.figure()
-    ax0 = plb.subplot(3,1,1)
-    #plot behavior
+    plb.figure(figsize= (8,20))
+    ax0 = plb.subplot(4,1,1)
     behv = expl.get_signal_mean([expl.ts(s,-1,0.2) for s in fly[2,indx,:numtrials,'L_m_R']])
+    stim = expl.get_signal_mean([expl.expan_transform(expl.ts(s,-1,0.2)) for s in fly[2,indx,:numtrials,'Xpos']])
+    plb.plot(behv.times,stim)
+    ax1 = plb.subplot(4,1,2,sharex = ax0)
+    #plot behavior
     plb.plot(behv.times,behv)
     #plot raster
-    ax1 = plb.subplot(3,1,2, sharex = ax0)
+    ax2 = plb.subplot(4,1,3, sharex = ax0)
     inc_trains = list()
     for st in spiketrains: 
         idx,features,U = expl.sort_spikes(np.array(st.waveforms[:-3]))
@@ -50,12 +53,32 @@ def plot_trial_spktrns(indx = 5):
                                 
                                 
     expl.phase_raster([np.array(trn) for trn in inc_trains],[trn.annotations['phases'] for trn in inc_trains])
-    ax1 = plb.subplot(3,1,3, sharex = ax0)
+    ax3 = plb.subplot(4,1,4, sharex = ax0)
     [plb.plot(np.array(trn),trn.annotations['phases'],'o',color = 'k',alpha = 0.2) for trn in inc_trains]
+    ax0.set_xbound(-1,0.2)
+    ax0.set_ybound(0,100)
     plb.show()
     return inc_trains
-
-#plot(sweep.times,sweep,color = 'k');[plot(x.times,x,color = cm.jet(c/(2*pi)),lw =2,alpha =0.7) for x,c in zip(inc_trains[0].waveforms,inc_trains[0].annotations['phases'])]
+    
+def plot_single_sweep_intro(trial_num,inc_trains):
+    ephys_sweep = expl.ts(fly[2,5,trial_num,'AMsysCh1'][0],-1,0.2)
+    left_wing = expl.ts(fly[2,5,trial_num,'LeftWing'][0],-1,0.2)
+    right_wing = expl.ts(fly[2,5,trial_num,'RightWing'][0],-1,0.2)
+    phases = expl.get_phase_trace(left_wing,right_wing)
+    stim = expl.expan_transform(expl.ts(fly[2,5,trial_num,'Xpos'][0],-1,0.2))
+    ax0 = plb.subplot(4,1,1)
+    plb.plot(stim.times,stim,color = 'k',alpha = 0.5)
+    ax0.set_ybound(0,100)
+    ax1 = plb.subplot(4,1,2,sharex = ax0)
+    plb.plot(left_wing.times,left_wing,color = (0.7,0.4,0.2),alpha = 0.8)
+    plb.plot(right_wing.times,right_wing,color = (0.2,0.4,0.7),alpha = 0.8)
+    ax2 = plb.subplot(4,1,3,sharex = ax0)
+    plb.plot(left_wing.times,phases,color = 'k',alpha = 0.5)
+    ax3 = plb.subplot(4,1,4,sharex = ax0)
+    plb.plot(ephys_sweep.times,ephys_sweep,color = 'k');
+    [plb.plot(x.times,x,color = plb.cm.jet(c/(2*np.pi)),lw =4,alpha =0.3) for x,c in zip(inc_trains[0].waveforms,inc_trains[0].annotations['phases'])]
+    ax0.set_xbound(-0.2,0.05)
+    plb.show()
 #plot(sweep.times,sweep);[plot(x.times,x,color = 'r',lw =4,alpha =0.5) for x in inc_trains[0].waveforms]
 """
 ###########################
