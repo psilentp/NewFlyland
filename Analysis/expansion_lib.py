@@ -341,10 +341,46 @@ def recondition_peaks(signal,pks):
         newpks.append(pk-10+offset)
     return newpks
         
-              
+def get_wingbeats(wb_signal):
+    thresh = 0.5
+    from scipy.signal import medfilt
+    detrend = np.array(wb_signal)-medfilt(wb_signal,151)
+    deltas = np.diff(np.array(detrend>thresh,dtype = 'float'))
+    starts = np.argwhere(deltas>0.5)
+    stops = np.argwhere(deltas<-0.5)
+    if starts[0] > stops[0]:
+        stops = stops[1:]
+    intervals = np.hstack((starts,stops))
+    peaks = [np.argmax(wb_signal[sta:stp])+sta for sta,stp in intervals]
+    return peaks
+ 
 def get_spiketrain(sweep):
-    """get the spiketrain associated with an asig return the spike train in 
-    neo's spiketrain format"""
+    thresh = 10.0
+    from scipy.signal import medfilt
+    detrend = np.array(sweep)-medfilt(sweep,35)
+    deltas = np.diff(np.array(detrend>thresh,dtype = 'float'))
+    starts = np.argwhere(deltas>0.5)
+    stops = np.argwhere(deltas<-0.5)
+    if starts[0] > stops[0]:
+        stops = stops[1:]
+    intervals = np.hstack((starts,stops))
+    peaks = [np.argmax(sweep[sta:stp])+sta for sta,stp in intervals]
+    waveforms = [sweep[pk-20:pk+10] for pk in peaks]
+    sweep.sampling_period.units = 's'
+    pk_tms = pq.Quantity([pk*sweep.sampling_period + sweep.t_start for pk in peaks])
+    spike_train = neo.SpikeTrain(pk_tms,
+                                sweep.t_stop,
+                                sampling_rate = sweep.sampling_rate,
+                                waveforms = waveforms,
+                                left_sweep = 30*sweep.sampling_period,
+                                t_start = sweep.t_start,
+                                pk_ind = peaks)
+    return spike_train
+
+"""                
+def get_spiketrain(sweep):
+    get the spiketrain associated with an asig return the spike train in 
+    neo's spiketrain format
     #sweep = array(asig)
     #first filter the sweep
     filtered = np.array(sweep) - medfilt(sweep,51)
@@ -372,6 +408,7 @@ def get_spiketrain(sweep):
                                 t_start = sweep.t_start,
                                 pk_ind = pk_ind)
     return spike_train
+"""
 
 def sort_spikes(wv_mtrx):
     from scipy.linalg import svd

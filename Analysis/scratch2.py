@@ -31,7 +31,8 @@ def plot_trial_spktrns(indx = 5):
     plb.plot(behv.times,behv)
     #plot raster
     ax2 = plb.subplot(4,1,3, sharex = ax0)
-    inc_trains = list()
+    inc_trains = spiketrains #list()
+    """
     for st in spiketrains: 
         idx,features,U = expl.sort_spikes(np.array(st.waveforms[:-3]))
         Umean = np.mean(U[:,0])
@@ -50,7 +51,7 @@ def plot_trial_spktrns(indx = 5):
                                 left_sweep = st.left_sweep,
                                 t_start = st.t_start,
                                 phases = phases))
-                                
+    """
                                 
     expl.phase_raster([np.array(trn) for trn in inc_trains],[trn.annotations['phases'] for trn in inc_trains])
     ax3 = plb.subplot(4,1,4, sharex = ax0)
