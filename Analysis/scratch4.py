@@ -22,12 +22,12 @@ def get_wingbeats(wb_signal):
 def get_spikepeaks(signal):
     thresh = 10.0
     from scipy.signal import medfilt
-    detrend = np.array(signal)-medfilt(signal,21)
+    detrend = np.array(signal)-medfilt(signal,35)
     deltas = np.diff(np.array(detrend>thresh,dtype = 'float'))
     starts = np.argwhere(deltas>0.5)
     stops = np.argwhere(deltas<-0.5)
     if starts[0] > stops[0]:
         stops = stops[1:]
     intervals = np.hstack((starts,stops))
-    peaks = [np.argmax(wb_signal[sta:stp])+sta for sta,stp in intervals]
+    peaks = [np.argmax(signal[sta:stp])+sta for sta,stp in intervals]
     return peaks

@@ -9,9 +9,9 @@ import quantities as pq
     
 dataroot = '/Users/psilentp/Dropbox/Data/LeftRight/'
 
-fly = expl.FlyRecord(2,0,dataroot)
+fly = expl.FlyRecord(5,0,dataroot)
 
-numtrials = 13
+numtrials = 4
 
 def plot_trial_spktrns(indx = 5):
     print('plot spike rasters for expansion from left vs right -1 to 0.2 sec')
