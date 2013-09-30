@@ -213,7 +213,7 @@ class FlyRecord(object):
         ax3 = subplot(3,1,3,sharex = ax1)
         plot(times,self[findex,pindex,:,'LeftWing'][sweepnum][-12000:-6000])
         plot(times,self[findex,pindex,:,'RightWing'][sweepnum][-12000:-6000])
-        return fig 
+        return fig
     
     def plot_ephys_summary(self):
         flynum = self.fly_number
@@ -413,8 +413,9 @@ def get_spiketrain(sweep):
 def sort_spikes(wv_mtrx):
     from scipy.linalg import svd
     from scipy.cluster.vq import kmeans2
-    
-    U,s,Vt = svd(wv_mtrx,full_matrices=False)
+    wv_mean = np.mean(wv_mtrx)
+    datamtrx = wv_mtrx-wv_mean
+    U,s,Vt = svd(datamtrx,full_matrices=False)
     V = Vt.T
 
     ind = np.argsort(s)[::-1]
@@ -423,7 +424,7 @@ def sort_spikes(wv_mtrx):
     V = V[:,ind]
 
     features = U
-    es, idx = kmeans2(features[:,0:2],2,iter=50)
+    es, idx = kmeans2(features[:,0:3],4)
     return idx,features,U
 
 def get_signal_mean(signal_list):

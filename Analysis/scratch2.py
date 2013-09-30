@@ -31,15 +31,24 @@ def plot_trial_spktrns(indx = 5):
     plb.plot(behv.times,behv)
     #plot raster
     ax2 = plb.subplot(4,1,3, sharex = ax0)
-    inc_trains = spiketrains #list()
-    """
-    for st in spiketrains: 
-        idx,features,U = expl.sort_spikes(np.array(st.waveforms[:-3]))
-        Umean = np.mean(U[:,0])
-        Ustd = np.std(U[:,0])
-        #criterion = U[:,0]>(Umean-50*Ustd)
+    inc_trains = list()#spiketrains #list()
+
+    
+    for st in spiketrains:
+        st = st[2:-3]
+        datamtrx = np.vstack([np.array(x) for x in st.waveforms])
+        idx,features,U = expl.sort_spikes(datamtrx)
+        crit = np.sqrt(U[:,0]**2 + U[:,1]**2)
+        Cmean = np.mean(crit)
+        Cstd = np.std(crit)
+        criterion = (crit<(Cmean+2*Cstd))
+        #Umean = np.mean(U[:,0])
+        #Ustd = np.std(U[:,0])
+        #criterion = (U[:,0]>(Umean-(Ustd))) & (U[:,0]<(Umean+(Ustd)))
+        #criterion = (U[:,0]>(Umean-(Ustd))) & (U[:,0]<(Umean+(Ustd)))
+        #criterion = idx < 3
         #criterion = criterion & (np.diff(np.array(st))>0.003)[:-2] 
-        criterion = (np.diff(np.array(st))>0.003)[:-2]      
+        #criterion = (np.diff(np.array(st))>0.003)[:-2]
         times = [st[i] for i,x in enumerate(criterion) if x]
         waveforms = [st.waveforms[i] for i,x in enumerate(criterion) if x]
         phases = np.array([st.annotations['phases'][i] for i,x in enumerate(criterion) if x])
@@ -51,7 +60,6 @@ def plot_trial_spktrns(indx = 5):
                                 left_sweep = st.left_sweep,
                                 t_start = st.t_start,
                                 phases = phases))
-    """
                                 
     expl.phase_raster([np.array(trn) for trn in inc_trains],[trn.annotations['phases'] for trn in inc_trains])
     ax3 = plb.subplot(4,1,4, sharex = ax0)
@@ -59,7 +67,7 @@ def plot_trial_spktrns(indx = 5):
     ax0.set_xbound(-1,0.2)
     ax0.set_ybound(0,100)
     plb.show()
-    return inc_trains
+    return inc_trains,U,crit
     
 def plot_single_sweep_intro(trial_num,inc_trains):
     ephys_sweep = expl.ts(fly[2,5,trial_num,'AMsysCh1'][0],-1,0.2)
