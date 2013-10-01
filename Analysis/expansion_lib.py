@@ -56,13 +56,13 @@ class FlyRecord(object):
             #first get the section presumed to include t-collision
             start_ind = self.trial_start_indicies[x]-self.left_window
             end_ind = self.trial_start_indicies[x]+self.right_window
-            if self.get_wbf(start_ind,end_ind) > self.min_wbf:
-                #shift the start and end ind to correct for the actual collision time.
-                icol = where(self.signals['Xpos'][self.trial_start_indicies[x]+5000:end_ind] >= ol_volts_per_deg*89.5)[0][0]
-                offset = icol + 5000 - floor(int(self.olepoch/self.dt)) - 1
-                start_ind += offset
-                end_ind += offset
-                retlist.append(self.signals[sigkey][start_ind:end_ind])
+            #if self.get_wbf(start_ind,end_ind) > self.min_wbf:
+            #shift the start and end ind to correct for the actual collision time.
+            icol = where(self.signals['Xpos'][self.trial_start_indicies[x]+5000:end_ind] >= ol_volts_per_deg*89.5)[0][0]
+            offset = icol + 5000 - floor(int(self.olepoch/self.dt)) - 1
+            start_ind += offset
+            end_ind += offset
+            retlist.append(self.signals[sigkey][start_ind:end_ind])
         for sig in retlist:
             #set the start time correcting for rounding errors
             sig.t_start = -1*(int(self.clepoch/self.dt)+int(self.olepoch/self.dt)+1)*self.dt#-2*(self.epoch)
@@ -75,8 +75,8 @@ class FlyRecord(object):
         R_h = self[function_index,position_index,trial_num,'RightWing'][0]
         #start_ind = int(start/L_h.sampling_period)
         #stop_ind = int(stop/L_h.sampling_period)
-        start_ind = np.argwhere(L_h.times>start)[0]
-        stop_ind = np.argwhere(L_h.times>stop)[0]
+        start_ind = np.argwhere(L_h.times>=start)[0]
+        stop_ind = np.argwhere(L_h.times>=stop)[0]
         #phases = np.angle(hilbert(get_low_filter(L_h+R_h,500)))
         phases = get_phase_trace(L_h[start_ind:stop_ind],R_h[start_ind:stop_ind])
         spk_train = get_spiketrain(self[function_index,position_index,trial_num,'AMsysCh1'][0][start_ind:stop_ind])
@@ -319,10 +319,10 @@ def plot_ephys_sweep(fly,findex,pindex,sweepnum):
 
     
 def ts(sweep,start,stop):
-    sta_index = argwhere(sweep.times <start)[-1]
-    stp_index = argwhere(sweep.times <stop)[-1]
-    return neo.AnalogSignal(sweep[103999:131998],
-                            t_start = sweep.times[103999],
+    sta_index = argwhere(sweep.times >=start)[0]
+    stp_index = argwhere(sweep.times >=stop)[0]
+    return neo.AnalogSignal(sweep[sta_index:stp_index],
+                            t_start = sweep.times[sta_index],
                             sampling_rate = sweep.sampling_rate)
 
 def get_phase_trace(L_h,R_h):
@@ -352,7 +352,6 @@ def get_wingbeats(wb_signal):
     if starts[0] > stops[0]:
         stops = stops[1:]
     if stops[-1] < starts[-1]:
-        print 'here'
         starts = starts[:-1]
     intervals = np.hstack((starts,stops))
     peaks = [np.argmax(wb_signal[sta:stp])+sta for sta,stp in intervals]
@@ -368,19 +367,18 @@ def get_spiketrain(sweep):
     if starts[0] > stops[0]:
         stops = stops[1:]
     if stops[-1] < starts[-1]:
-        print 'here'
         starts = starts[:-1]
-    print(len(starts),len(stops))
     intervals = np.hstack((starts,stops))
     peaks = [np.argmax(sweep[sta:stp])+sta for sta,stp in intervals]
     waveforms = [sweep[pk-20:pk+10] for pk in peaks]
     sweep.sampling_period.units = 's'
-    pk_tms = pq.Quantity([pk*sweep.sampling_period + sweep.t_start for pk in peaks])
+    pk_tms = sweep.times[array(peaks)]
+    #pk_tms = pq.Quantity([pk*sweep.sampling_period + sweep.t_start for pk in peaks])
     spike_train = neo.SpikeTrain(pk_tms,
                                 sweep.t_stop,
                                 sampling_rate = sweep.sampling_rate,
                                 waveforms = waveforms,
-                                left_sweep = 30*sweep.sampling_period,
+                                left_sweep = 20*sweep.sampling_period,
                                 t_start = sweep.t_start,
                                 pk_ind = peaks)
     return spike_train
@@ -431,8 +429,13 @@ def sort_spikes(wv_mtrx):
     s = s[ind]
     V = V[:,ind]
 
-    features = U
-    es, idx = kmeans2(features[:,0:3],4)
+    p2p = np.max(wv_mtrx,axis = 1) -np.min(wv_mtrx,axis = 1)
+    print(shape(array([p2p]).T))
+    print(shape(U))
+    features = np.concatenate((array([p2p]).T,U),axis = 1)
+    #print(shape(features))
+    #print shape(U)
+    es, idx = kmeans2(features[:,0:2],2)
     return idx,features,U
 
 def get_signal_mean(signal_list):

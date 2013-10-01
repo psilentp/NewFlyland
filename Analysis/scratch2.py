@@ -9,9 +9,9 @@ import quantities as pq
     
 dataroot = '/Users/psilentp/Dropbox/Data/LeftRight/'
 
-fly = expl.FlyRecord(6,0,dataroot)
+fly = expl.FlyRecord(2,0,dataroot)
 
-numtrials = 15r
+numtrials = 15
 
 def plot_trial_spktrns(indx = 5):
     print('plot spike rasters for expansion from left vs right -1 to 0.2 sec')
@@ -38,20 +38,24 @@ def plot_trial_spktrns(indx = 5):
         st = st[2:-3]
         datamtrx = np.vstack([np.array(x) for x in st.waveforms])
         idx,features,U = expl.sort_spikes(datamtrx)
-        crit = np.sqrt(U[:,0]**2 + U[:,1]**2)
+        crit = np.sqrt(U[:,0]**2 + U[:,1]**2++ U[:,2]**2)
         Cmean = np.mean(crit)
         Cstd = np.std(crit)
-        criterion = (crit<(Cmean+2*Cstd))
+        #criterion = ((crit<(Cmean+Cstd)) & (crit>(Cmean-Cstd)))
         #Umean = np.mean(U[:,0])
         #Ustd = np.std(U[:,0])
         #criterion = (U[:,0]>(Umean-(Ustd))) & (U[:,0]<(Umean+(Ustd)))
         #criterion = (U[:,0]>(Umean-(Ustd))) & (U[:,0]<(Umean+(Ustd)))
-        #criterion = idx < 3
+        idx = np.array(idx,dtype = int)
+        if len(np.argwhere(idx==1)) > len(np.argwhere(idx==0)):
+            criterion = (idx == 1)
+        else:
+            criterion = (idx == 0)
         #criterion = criterion & (np.diff(np.array(st))>0.003)[:-2] 
         #criterion = (np.diff(np.array(st))>0.003)[:-2]
         times = [st[i] for i,x in enumerate(criterion) if x]
         waveforms = [st.waveforms[i] for i,x in enumerate(criterion) if x]
-        phases = np.array([st.annotations['phases'][i] for i,x in enumerate(criterion) if x])
+        phases = np.array([st.annotations['phases'][2:-3][i] for i,x in enumerate(criterion) if x])
         print len(st),len(times)
         inc_trains.append(neo.SpikeTrain(times*pq.Quantity(1,'s'),
                                 st.t_stop,
@@ -82,10 +86,14 @@ def plot_single_sweep_intro(trial_num,inc_trains):
     plb.plot(left_wing.times,left_wing,color = (0.7,0.4,0.2),alpha = 0.8)
     plb.plot(right_wing.times,right_wing,color = (0.2,0.4,0.7),alpha = 0.8)
     ax2 = plb.subplot(4,1,3,sharex = ax0)
+    
     plb.plot(left_wing.times,phases,color = 'k',alpha = 0.5)
+    tst_sweep = fly.extract_trial_spikes(2,5,trial_num,-1,0.2)
+    plb.plot(np.array(inc_trains[trial_num].times),np.array(inc_trains[trial_num].annotations['phases']),'o')
+    plb.plot(np.array(tst_sweep.times),np.array(tst_sweep.annotations['phases']),'o')
     ax3 = plb.subplot(4,1,4,sharex = ax0)
     plb.plot(ephys_sweep.times,ephys_sweep,color = 'k');
-    [plb.plot(x.times,x,color = plb.cm.jet(c/(2*np.pi)),lw =4,alpha =0.3) for x,c in zip(inc_trains[0].waveforms,inc_trains[0].annotations['phases'])]
+    [plb.plot(x.times,x,color = plb.cm.jet(c/(2*np.pi)),lw =4,alpha =0.3) for x,c in zip(inc_trains[trial_num].waveforms,inc_trains[trial_num].annotations['phases'])]
     ax0.set_xbound(-0.2,0.05)
     plb.show()
 #plot(sweep.times,sweep);[plot(x.times,x,color = 'r',lw =4,alpha =0.5) for x in inc_trains[0].waveforms]
