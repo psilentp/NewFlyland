@@ -328,7 +328,8 @@ def ts(sweep,start,stop):
 def get_phase_trace(L_h,R_h):
     from scipy.signal import hilbert,find_peaks_cwt
     phases = np.angle(hilbert(get_low_filter(L_h+R_h,500)))
-    pks = find_peaks_cwt(L_h+R_h,np.arange(10,20))
+    #pks = find_peaks_cwt(L_h+R_h,np.arange(10,20))
+    pks = get_wingbeats(L_h+R_h)
     newpks = recondition_peaks(L_h+R_h,pks)
     phase_shift = np.mean(phases[newpks])
     phases = np.mod(np.unwrap(phases)-phase_shift,2*np.pi)
@@ -350,6 +351,9 @@ def get_wingbeats(wb_signal):
     stops = np.argwhere(deltas<-0.5)
     if starts[0] > stops[0]:
         stops = stops[1:]
+    if stops[-1] < starts[-1]:
+        print 'here'
+        starts = starts[:-1]
     intervals = np.hstack((starts,stops))
     peaks = [np.argmax(wb_signal[sta:stp])+sta for sta,stp in intervals]
     return peaks
@@ -363,6 +367,10 @@ def get_spiketrain(sweep):
     stops = np.argwhere(deltas<-0.5)
     if starts[0] > stops[0]:
         stops = stops[1:]
+    if stops[-1] < starts[-1]:
+        print 'here'
+        starts = starts[:-1]
+    print(len(starts),len(stops))
     intervals = np.hstack((starts,stops))
     peaks = [np.argmax(sweep[sta:stp])+sta for sta,stp in intervals]
     waveforms = [sweep[pk-20:pk+10] for pk in peaks]
