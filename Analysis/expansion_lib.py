@@ -435,7 +435,7 @@ def sort_spikes(wv_mtrx):
     features = np.concatenate((array([p2p]).T,U),axis = 1)
     #print(shape(features))
     #print shape(U)
-    es, idx = kmeans2(features[:,0:2],2)
+    es, idx = kmeans2(features[:,0:8],2)
     return idx,features,U
 
 def get_signal_mean(signal_list):

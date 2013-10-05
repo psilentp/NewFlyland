@@ -9,7 +9,7 @@ import quantities as pq
     
 dataroot = '/Users/psilentp/Dropbox/Data/LeftRight/'
 
-fly = expl.FlyRecord(6,0,dataroot)
+fly = expl.FlyRecord(10,0,dataroot)
 
 numtrials = 14
 
