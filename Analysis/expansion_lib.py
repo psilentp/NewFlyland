@@ -360,6 +360,8 @@ def get_wingbeats(wb_signal):
 def get_spiketrain(sweep):
     thresh = 10.0
     from scipy.signal import medfilt
+    wl = 25
+    wr = 15
     detrend = np.array(sweep)-medfilt(sweep,35)
     deltas = np.diff(np.array(detrend>thresh,dtype = 'float'))
     starts = np.argwhere(deltas>0.5)
@@ -370,7 +372,7 @@ def get_spiketrain(sweep):
         starts = starts[:-1]
     intervals = np.hstack((starts,stops))
     peaks = [np.argmax(sweep[sta:stp])+sta for sta,stp in intervals]
-    waveforms = [sweep[pk-20:pk+10] for pk in peaks]
+    waveforms = [sweep[pk-wl:pk+wr] for pk in peaks]
     sweep.sampling_period.units = 's'
     pk_tms = sweep.times[array(peaks)]
     #pk_tms = pq.Quantity([pk*sweep.sampling_period + sweep.t_start for pk in peaks])
@@ -378,7 +380,7 @@ def get_spiketrain(sweep):
                                 sweep.t_stop,
                                 sampling_rate = sweep.sampling_rate,
                                 waveforms = waveforms,
-                                left_sweep = 20*sweep.sampling_period,
+                                left_sweep = wl*sweep.sampling_period,
                                 t_start = sweep.t_start,
                                 pk_ind = peaks)
     return spike_train
@@ -419,6 +421,22 @@ def get_spiketrain(sweep):
 def sort_spikes(wv_mtrx):
     from scipy.linalg import svd
     from scipy.cluster.vq import kmeans2
+    import sklearn
+    from sklearn import cluster, datasets
+    from sklearn.metrics import euclidean_distances
+    from sklearn.neighbors import kneighbors_graph
+    from sklearn.preprocessing import StandardScaler
+    import pywt
+    
+    p2p = np.max(wv_mtrx,axis = 1) -np.min(wv_mtrx,axis = 1)
+    p2pt = np.argmax(wv_mtrx,axis = 1) - np.argmin(wv_mtrx,axis = 1)
+    wave_dff = np.diff(wv_mtrx,axis = 1)
+    dp2p = np.max(wave_dff,axis = 1) -np.min(wave_dff,axis = 1)
+    dp2pt = np.argmax(wave_dff,axis = 1) - np.argmin(wave_dff,axis = 1)
+    print(shape(wv_mtrx))
+    wtr = vstack([hstack(pywt.wavedec(wv_mtrx[x,:],'db2',level = 3)) for x in range(shape(wv_mtrx)[0])])
+    #wv_mtrx = vstack([pywt.dwt(wv_mtrx[x,:],'db2')[1] for x in range(shape(wv_mtrx)[0])])
+    print(shape(wv_mtrx))
     wv_mean = np.mean(wv_mtrx)
     datamtrx = wv_mtrx-wv_mean
     U,s,Vt = svd(datamtrx,full_matrices=False)
@@ -429,13 +447,24 @@ def sort_spikes(wv_mtrx):
     s = s[ind]
     V = V[:,ind]
 
-    p2p = np.max(wv_mtrx,axis = 1) -np.min(wv_mtrx,axis = 1)
-    print(shape(array([p2p]).T))
-    print(shape(U))
-    features = np.concatenate((array([p2p]).T,U),axis = 1)
+    
+    #print(shape(array([p2p]).T))
+    #print(shape(U))
+    #print shape(wtr)
+    #features = np.concatenate((wtr,array([p2p]).T,array([p2pt]).T,array([dp2p]).T,array([dp2pt]).T,U),axis = 1)
+    #features = np.concatenate((array([p2p]).T,array([p2pt]).T,array([dp2p]).T,array([dp2pt]).T,U),axis = 1)
+    features = np.concatenate((array([p2p]).T,array([p2pt]).T,U[:,:3],wtr[:,:3]),axis = 1)
+    dbscan = cluster.DBSCAN(eps=1.0)
+    X = StandardScaler().fit_transform(features[:,:8])
+    dbscan.fit(X[:,:8])
+    idx = dbscan.labels_.astype(np.int)
+    
+    #features = Ur
     #print(shape(features))
     #print shape(U)
-    es, idx = kmeans2(features[:,0:8],2)
+    #es, idx = kmeans2(X[:,:8],2)
+    #es, idx = kmeans2(features[:,:3],2,minit = 'points')
+    #es, idx = kmeans2(features[:,:10],2)
     return idx,features,U
 
 def get_signal_mean(signal_list):

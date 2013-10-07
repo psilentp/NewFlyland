@@ -11,9 +11,10 @@ dataroot = '/Users/psilentp/Dropbox/Data/LeftRight/'
 
 fly = expl.FlyRecord(10,0,dataroot)
 
-numtrials = 14
-
+numtrials = 15
+    
 def plot_trial_spktrns(indx = 5):
+    import pywt
     print('plot spike rasters for expansion from left vs right -1 to 0.2 sec')
     spiketrains = list()
     for x in range(numtrials):
@@ -36,7 +37,7 @@ def plot_trial_spktrns(indx = 5):
     
     for st in spiketrains:
         st = st[2:-3]
-        datamtrx = np.vstack([np.array(x) for x in st.waveforms])
+        datamtrx = np.vstack([np.array(x)for x in st.waveforms])
         idx,features,U = expl.sort_spikes(datamtrx)
         crit = np.sqrt(U[:,0]**2 + U[:,1]**2++ U[:,2]**2)
         Cmean = np.mean(crit)
@@ -47,10 +48,16 @@ def plot_trial_spktrns(indx = 5):
         #criterion = (U[:,0]>(Umean-(Ustd))) & (U[:,0]<(Umean+(Ustd)))
         #criterion = (U[:,0]>(Umean-(Ustd))) & (U[:,0]<(Umean+(Ustd)))
         idx = np.array(idx,dtype = int)
-        if len(np.argwhere(idx==1)) > len(np.argwhere(idx==0)):
-            criterion = (idx == 1)
-        else:
-            criterion = (idx == 0)
+        #if len(np.argwhere(idx==1)) > len(np.argwhere(idx==0)):
+        #    criterion = (idx == 1)
+        #else:
+        #    criterion = (idx == 0)
+        bins = bins = np.arange(min(idx),max(idx)+2,1)
+        hbins = np.histogram(idx,bins = bins)[0]
+        hind = np.argsort(hbins[1:])+1
+        print hbins
+        print hind
+        criterion = ((idx == bins[hind[-1]]) | (idx == bins[hind[-2]]))
         #criterion = criterion & (np.diff(np.array(st))>0.003)[:-2] 
         #criterion = (np.diff(np.array(st))>0.003)[:-2]
         times = [st[i] for i,x in enumerate(criterion) if x]
@@ -71,14 +78,14 @@ def plot_trial_spktrns(indx = 5):
     ax0.set_xbound(-1,0.2)
     ax0.set_ybound(0,100)
     plb.show()
-    return inc_trains,U,crit
+    return inc_trains,features,crit,idx
     
-def plot_single_sweep_intro(trial_num,inc_trains):
-    ephys_sweep = expl.ts(fly[2,5,trial_num,'AMsysCh1'][0],-1,0.2)
-    left_wing = expl.ts(fly[2,5,trial_num,'LeftWing'][0],-1,0.2)
-    right_wing = expl.ts(fly[2,5,trial_num,'RightWing'][0],-1,0.2)
+def plot_single_sweep_intro(trial_num,inc_trains,indx):
+    ephys_sweep = expl.ts(fly[2,indx,trial_num,'AMsysCh1'][0],-1,0.2)
+    left_wing = expl.ts(fly[2,indx,trial_num,'LeftWing'][0],-1,0.2)
+    right_wing = expl.ts(fly[2,indx,trial_num,'RightWing'][0],-1,0.2)
     phases = expl.get_phase_trace(left_wing,right_wing)
-    stim = expl.expan_transform(expl.ts(fly[2,5,trial_num,'Xpos'][0],-1,0.2))
+    stim = expl.expan_transform(expl.ts(fly[2,indx,trial_num,'Xpos'][0],-1,0.2))
     ax0 = plb.subplot(4,1,1)
     plb.plot(stim.times,stim,color = 'k',alpha = 0.5)
     ax0.set_ybound(0,100)
@@ -88,7 +95,7 @@ def plot_single_sweep_intro(trial_num,inc_trains):
     ax2 = plb.subplot(4,1,3,sharex = ax0)
     
     plb.plot(left_wing.times,phases,color = 'k',alpha = 0.5)
-    tst_sweep = fly.extract_trial_spikes(2,5,trial_num,-1,0.2)
+    tst_sweep = fly.extract_trial_spikes(2,indx,trial_num,-1,0.2)
     plb.plot(np.array(inc_trains[trial_num].times),np.array(inc_trains[trial_num].annotations['phases']),'o')
     plb.plot(np.array(tst_sweep.times),np.array(tst_sweep.annotations['phases']),'o')
     ax3 = plb.subplot(4,1,4,sharex = ax0)
@@ -96,6 +103,15 @@ def plot_single_sweep_intro(trial_num,inc_trains):
     [plb.plot(x.times,x,color = plb.cm.jet(c/(2*np.pi)),lw =4,alpha =0.3) for x,c in zip(inc_trains[trial_num].waveforms,inc_trains[trial_num].annotations['phases'])]
     ax0.set_xbound(-0.2,0.05)
     plb.show()
+    
+def plot_feature_mtrx(features,idx,num_feat = 4):
+    ind = 1
+    colors = ([([1,0,1],[1,0,0],[0,0,1],[0,1,1],[0,0.3,0.5])[i] for i in idx])
+    for x in range(num_feat):
+        for y in range(num_feat):
+            plb.subplot(num_feat,num_feat,ind)
+            plb.scatter(features[:,x],features[:,y],c =  colors)
+            ind += 1 
 #plot(sweep.times,sweep);[plot(x.times,x,color = 'r',lw =4,alpha =0.5) for x in inc_trains[0].waveforms]
 """
 ###########################
