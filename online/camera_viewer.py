@@ -3,7 +3,7 @@ import cv2
 from cv2 import cv
 import pylab as plb
 import time
-#from pyVimba import VimbaCamera, pyVimbaShutdown
+from pyVimba import VimbaCamera, pyVimbaShutdown
 
 class PlateGui(wx.Frame):
 
@@ -17,8 +17,8 @@ class PlateGui(wx.Frame):
         okButton = wx.Button(self, wx.ID_OK, "Save",pos=(0, 500))
         self.Bind(wx.EVT_BUTTON, self.OnClick, okButton)
         
-        self.sld = wx.Slider(self, value=200, minValue=150, maxValue=500, pos=(110, 505), 
-            size=(530, -1), style=wx.SL_HORIZONTAL)
+        self.sld = wx.Slider(self, value=200, minValue=5, maxValue=1000, pos=(110, 505), 
+            size=(450, -1), style=wx.SL_HORIZONTAL)
         self.sld.Bind(wx.EVT_SCROLL, self.OnSliderScroll)
         
         menuBar = wx.MenuBar()
@@ -28,7 +28,10 @@ class PlateGui(wx.Frame):
         #print "Made frame"
     
     def OnSliderScroll(self,event):
-        self.cam.set(cv.CV_CAP_PROP_EXPOSURE,.50)
+        #pass
+        obj = event.GetEventObject()
+        val = obj.GetValue()
+        self.cam.set(cv.CV_CAP_PROP_EXPOSURE,val)
         #time.sleep(2)
         #print 'slide'
         
@@ -42,18 +45,18 @@ class ShowCapture(wx.Panel):
         self.parent = parent
         self.parent.cam = cam
         
-        #frame = self.cam.getImage(2000)
         ret, self.parent.image = self.parent.cam.read()
-        image = cv2.resize(self.parent.image, (0,0), fx=2, fy=2)
+        image = self.parent.image
+        #image = cv2.resize(self.parent.image, (0,0), fx=2, fy=2)
 
         height, width = self.parent.image.shape[:2]
-        parent.SetSize((width*2, height*2.35))
-        self.SetSize((2*width, 2*height))
+        parent.SetSize((width*1, height*1.35))
+        self.SetSize((1*width, 1*height))
         #frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
         
         
-        self.bmp = wx.BitmapFromBuffer(2*width, 2*height, image)
+        self.bmp = wx.BitmapFromBuffer(width, height, image)
 
         self.timer = wx.Timer(self)
         self.timer.Start(1000./fps)
@@ -74,12 +77,11 @@ class ShowCapture(wx.Panel):
 
     def NextFrame(self, event):
         ret, self.parent.image = self.parent.cam.read()
-        #frame = self.cam.getImage(2000)
-        #ret = True
         if ret:
             #frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
-            image = cv2.resize(self.parent.image, (0,0), fx=2, fy=2)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            #image = cv2.resize(self.parent.image, (0,0), fx=2, fy=2)
+            image = self.parent.image
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
             
             self.bmp.CopyFromBuffer(image)
             self.Refresh()
@@ -88,13 +90,38 @@ class ShowCapture(wx.Panel):
 #cam = VimbaCamera(cams[0]['id'])
 #cam.grabStart()
 
-cam = cv2.VideoCapture(0)
-cam.set(cv.CV_CAP_PROP_FRAME_WIDTH, 320)
-cam.set(cv.CV_CAP_PROP_FRAME_HEIGHT, 240)
+class AVTCam(object):
+    def __init__(self,index):
+        cams = VimbaCamera.getAvailableCameras(True)
+        self.camera = VimbaCamera(cams[index]['id'])
+        self.camera.grabStart()
+    
+    def __del__(self):
+        pyVimbaShutdown()
+    
+    def read(self):
+        try:
+            frame = self.xsxcamera.getImage(2000)
+            ret = True
+        except:
+            frame = None
+            ret = False
+        return ret,frame
+        
+    def set(self,prop,value):
+        if prop == cv.CV_CAP_PROP_EXPOSURE:
+            self.camera.setFeature('ExposureTimeAbs',value*1000)
+            #cv.CV_CAP_PROP_EXPOSURE,.50)
+        
+#cam = cv2.VideoCapture(0)
+cam = AVTCam(0)
+#cam.set(cv.CV_CAP_PROP_FRAME_WIDTH, 320)
+#cam.set(cv.CV_CAP_PROP_FRAME_HEIGHT, 240)
 
 app = wx.App()
 aframe = PlateGui(parent=None,id=-1,title="Test Frame")
 cap = ShowCapture(aframe, cam)
 aframe.Show()
 app.MainLoop()
-cam.release()
+pyVimbaShutdown()
+#cam.release()
