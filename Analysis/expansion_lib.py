@@ -361,7 +361,7 @@ def get_spiketrain(sweep):
     thresh = 10.0
     from scipy.signal import medfilt
     wl = 25
-    wr = 15
+    wr = 20
     detrend = np.array(sweep)-medfilt(sweep,35)
     deltas = np.diff(np.array(detrend>thresh,dtype = 'float'))
     starts = np.argwhere(deltas>0.5)
@@ -433,10 +433,11 @@ def sort_spikes(wv_mtrx):
     wave_dff = np.diff(wv_mtrx,axis = 1)
     dp2p = np.max(wave_dff,axis = 1) -np.min(wave_dff,axis = 1)
     dp2pt = np.argmax(wave_dff,axis = 1) - np.argmin(wave_dff,axis = 1)
-    print(shape(wv_mtrx))
-    wtr = vstack([hstack(pywt.wavedec(wv_mtrx[x,:],'db2',level = 3)) for x in range(shape(wv_mtrx)[0])])
+    #print(shape(wv_mtrx))
+    wtr = vstack([hstack(pywt.wavedec(wv_mtrx[x,:],'db9',level = 3)) for x in range(shape(wv_mtrx)[0])])
+    wtr2 = vstack([hstack(pywt.wavedec(wv_mtrx[x,:],'haar',level = 3)) for x in range(shape(wv_mtrx)[0])])
     #wv_mtrx = vstack([pywt.dwt(wv_mtrx[x,:],'db2')[1] for x in range(shape(wv_mtrx)[0])])
-    print(shape(wv_mtrx))
+    #print(shape(wv_mtrx))
     wv_mean = np.mean(wv_mtrx)
     datamtrx = wv_mtrx-wv_mean
     U,s,Vt = svd(datamtrx,full_matrices=False)
@@ -446,6 +447,7 @@ def sort_spikes(wv_mtrx):
     U = U[:,ind]
     s = s[ind]
     V = V[:,ind]
+    print shape(wtr)
 
     
     #print(shape(array([p2p]).T))
@@ -453,8 +455,8 @@ def sort_spikes(wv_mtrx):
     #print shape(wtr)
     #features = np.concatenate((wtr,array([p2p]).T,array([p2pt]).T,array([dp2p]).T,array([dp2pt]).T,U),axis = 1)
     #features = np.concatenate((array([p2p]).T,array([p2pt]).T,array([dp2p]).T,array([dp2pt]).T,U),axis = 1)
-    features = np.concatenate((array([p2p]).T,array([p2pt]).T,U[:,:3],wtr[:,:3]),axis = 1)
-    dbscan = cluster.DBSCAN(eps=1.0)
+    features = np.concatenate((array([p2p]).T,array([p2pt]).T,wtr[:,:3],U[:,:3]),axis = 1)
+    dbscan = cluster.DBSCAN(eps=1.5)
     X = StandardScaler().fit_transform(features[:,:8])
     dbscan.fit(X[:,:8])
     idx = dbscan.labels_.astype(np.int)
@@ -464,7 +466,7 @@ def sort_spikes(wv_mtrx):
     #print shape(U)
     #es, idx = kmeans2(X[:,:8],2)
     #es, idx = kmeans2(features[:,:3],2,minit = 'points')
-    #es, idx = kmeans2(features[:,:10],2)
+    #es, idx = kmeans2(features[:,:8],4)
     return idx,features,U
 
 def get_signal_mean(signal_list):

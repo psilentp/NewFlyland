@@ -57,7 +57,11 @@ def plot_trial_spktrns(indx = 5):
         hind = np.argsort(hbins[1:])+1
         print hbins
         print hind
-        criterion = ((idx == bins[hind[-1]]) | (idx == bins[hind[-2]]))
+        try:
+            criterion = ((idx == bins[hind[-1]]) | (idx == bins[hind[-2]]))
+        except IndexError:
+            print('here')
+            criterion = (idx == bins[hind[-1]])
         #criterion = criterion & (np.diff(np.array(st))>0.003)[:-2] 
         #criterion = (np.diff(np.array(st))>0.003)[:-2]
         times = [st[i] for i,x in enumerate(criterion) if x]
