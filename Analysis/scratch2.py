@@ -9,7 +9,7 @@ import quantities as pq
     
 dataroot = '/Users/psilentp/Dropbox/Data/LeftRight/'
 
-fly = expl.FlyRecord(10,0,dataroot)
+fly = expl.FlyRecord(14,0,dataroot)
 
 numtrials = 15
     
@@ -52,16 +52,16 @@ def plot_trial_spktrns(indx = 5):
         #    criterion = (idx == 1)
         #else:
         #    criterion = (idx == 0)
-        bins = bins = np.arange(min(idx),max(idx)+2,1)
+        bins = np.arange(min(idx),max(idx)+2,1)
         hbins = np.histogram(idx,bins = bins)[0]
         hind = np.argsort(hbins[1:])+1
         print hbins
         print hind
-        try:
-            criterion = ((idx == bins[hind[-1]]) | (idx == bins[hind[-2]]))
-        except IndexError:
-            print('here')
-            criterion = (idx == bins[hind[-1]])
+        #try:
+        #    criterion = ((idx == bins[hind[-1]]) | (idx == bins[hind[-2]]))
+        #except IndexError:
+        #    print('here')
+        criterion = (idx == bins[hind[-1]])
         #criterion = criterion & (np.diff(np.array(st))>0.003)[:-2] 
         #criterion = (np.diff(np.array(st))>0.003)[:-2]
         times = [st[i] for i,x in enumerate(criterion) if x]

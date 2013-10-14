@@ -456,9 +456,9 @@ def sort_spikes(wv_mtrx):
     #features = np.concatenate((wtr,array([p2p]).T,array([p2pt]).T,array([dp2p]).T,array([dp2pt]).T,U),axis = 1)
     #features = np.concatenate((array([p2p]).T,array([p2pt]).T,array([dp2p]).T,array([dp2pt]).T,U),axis = 1)
     features = np.concatenate((array([p2p]).T,array([p2pt]).T,wtr[:,:3],U[:,:3]),axis = 1)
-    dbscan = cluster.DBSCAN(eps=1.5)
-    X = StandardScaler().fit_transform(features[:,:8])
-    dbscan.fit(X[:,:8])
+    dbscan = cluster.DBSCAN(eps=0.2)
+    X = StandardScaler().fit_transform(features[:,:2])
+    dbscan.fit(X[:,:2])
     idx = dbscan.labels_.astype(np.int)
     
     #features = Ur
