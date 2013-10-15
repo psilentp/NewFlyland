@@ -18,12 +18,12 @@ class PlateGui(wx.Frame):
         #self.toolbar.AddButton(self, wx.ID_OK, "Ok")
         #self.toolbar.Realize()
         #okButton = wx.Button(self, wx.ID_OK, "Save",pos=(0, 500))
-        okButton = wx.Button(self, wx.ID_OK, "Save",pos=(0, 800))
+        #height,width = self.image
+        okButton = wx.Button(self, wx.ID_OK, "Save",pos=(0, 500))
         self.Bind(wx.EVT_BUTTON, self.OnClick, okButton)
-        
         #self.sld = wx.Slider(self, value=200, minValue=5, maxValue=1000, pos=(110, 505), 
         #    size=(450, -1), style=wx.SL_HORIZONTAL)
-        self.sld = wx.Slider(self, value=200, minValue=5, maxValue=1000, pos=(110, 805), 
+        self.sld = wx.Slider(self, value=200, minValue=5, maxValue=1000, pos=(110, 505), 
             size=(450, -1), style=wx.SL_HORIZONTAL)
         self.sld.Bind(wx.EVT_SCROLL, self.OnSliderScroll)
         
@@ -42,17 +42,18 @@ class PlateGui(wx.Frame):
         #print 'slide'
         
     def OnClick(self,event):
-        height,width,depth = self.image.shape
+        height,width = self.image.shape
         mtrx = np.zeros((10,height,width),dtype = np.uint8)
         frames = list()
         for x,frame in enumerate(self.framebuffer):
-            frame = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+            #frame = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
             mtrx[x,:,:] = cv.fromarray(frame)
+        #print 'here'
         rimg = cv2.fastNlMeansDenoisingMulti(mtrx,5,3)
         cv2.imwrite('out.tif', rimg)
         
 class ShowCapture(wx.Panel):
-    def __init__(self, parent, capture, fps=15):
+    def __init__(self, parent, capture, fps=60):
         wx.Panel.__init__(self, parent)
 
         self.parent = parent
@@ -60,14 +61,14 @@ class ShowCapture(wx.Panel):
         
         ret, self.parent.image = self.parent.cam.read()
         image = self.parent.image
-        #image = cv2.resize(self.parent.image, (0,0), fx=2, fy=2)
+        image = cv2.resize(self.parent.image, (0,0), fx=2, fy=2)
 
         height, width = self.parent.image.shape[:2]
         parent.SetSize((width*1, height*1.35))
         self.SetSize((1*width, 1*height))
-        #frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
         #image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         
         
         self.bmp = wx.BitmapFromBuffer(width, height, image)
@@ -96,8 +97,8 @@ class ShowCapture(wx.Panel):
             #frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
             #image = cv2.resize(self.parent.image, (0,0), fx=2, fy=2)
             image = self.parent.image
-            #image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+            #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             
             self.bmp.CopyFromBuffer(image)
             self.Refresh()
@@ -117,7 +118,7 @@ class AVTCam(object):
     
     def read(self):
         try:
-            frame = self.xsxcamera.getImage(2000)
+            frame = self.camera.getImage(2000)
             ret = True
         except:
             frame = None
@@ -146,5 +147,5 @@ aframe = PlateGui(parent=None,id=-1,title="Test Frame")
 cap = ShowCapture(aframe, cam)
 aframe.Show()
 app.MainLoop()
-#pyVimbaShutdown()
-cam.release()
+pyVimbaShutdown()
+#cam.release()

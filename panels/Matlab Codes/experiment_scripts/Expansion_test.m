@@ -21,7 +21,7 @@ pause(5);
 
 %Five reps of all five aproach rates presented from both sides.
 for rep = 1:5
-    for i = datasample(1:5,1:5;ones(1,5)*5,ones(1,5)*11],10,2,'replace',false)
+    for i = datasample([1:5,1:5;ones(1,5)*5,ones(1,5)*11],10,2,'replace',false)
         approach_time = i(1);
         expan_pole = i(2);
         datarecord(record_index).approach_time = approach_time;
@@ -48,7 +48,7 @@ for rep = 1:5
         Panel_com('set_posfunc_id',[1 approach_time]);pause(0.01); %position function to run on channel 1 (X) 
         Panel_com('set_funcx_freq', expan_update_freq);pause(0.1); %run at 500hz 2ms steps
         Panel_com('start');
-        pause(5.2);
+        pause(1.2);
         record_index = record_index+1;
         %%Panel_com('ident_compress_off');pause(0.005);
         i

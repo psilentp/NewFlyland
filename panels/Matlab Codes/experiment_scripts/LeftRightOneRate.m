@@ -23,7 +23,7 @@ pause(5);
 %approach rate index = 2 corresponds to 20ms approach rate
 
 for rep = 1:5
-    for i =for i = datasample([ones(1:10)*2;ones(1,5)*5,ones(1,5)*11],10,2,'replace',false)
+    for i = datasample([ones(1,10)*2;ones(1,5)*5,ones(1,5)*11],10,2,'replace',false)
         approach_time = i(1);
         expan_pole = i(2);
         datarecord(record_index).approach_time = approach_time;
