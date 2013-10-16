@@ -330,17 +330,23 @@ def get_phase_trace(L_h,R_h):
     phases = np.angle(hilbert(get_low_filter(L_h+R_h,500)))
     #pks = find_peaks_cwt(L_h+R_h,np.arange(10,20))
     pks = get_wingbeats(L_h+R_h)
-    newpks = recondition_peaks(L_h+R_h,pks)
-    phase_shift = np.mean(phases[newpks])
+    newpks,flips = recondition_peaks(L_h+R_h,pks)
+    phase_shift = np.mean(phases[flips])
     phases = np.mod(np.unwrap(phases)-phase_shift,2*np.pi)
     return phases
 
 def recondition_peaks(signal,pks):
     newpks = list()
+    flips = list()
     for pk in pks:
         offset = np.argmax(signal[pk-10:pk+10])
         newpks.append(pk-10+offset)
-    return newpks
+        try:
+            flip = argwhere( (diff(signal[pk-20:pk])>0) < 1 )[-1]+1
+            flips.append(pk-20+int(flip))
+        except IndexError:
+            pass
+    return newpks,flips
         
 def get_wingbeats(wb_signal):
     thresh = 0.5
@@ -426,14 +432,30 @@ def sort_spikes(wv_mtrx):
     from sklearn.metrics import euclidean_distances
     from sklearn.neighbors import kneighbors_graph
     from sklearn.preprocessing import StandardScaler
+    from sklearn import svm
+    from sklearn.covariance import EllipticEnvelope
     import pywt
+    from scipy import stats
     
     p2p = np.max(wv_mtrx,axis = 1) -np.min(wv_mtrx,axis = 1)
     p2pt = np.argmax(wv_mtrx,axis = 1) - np.argmin(wv_mtrx,axis = 1)
+    
+    
+    ##medsweep erro
+    wv_med = np.median(wv_mtrx,axis = 0)
+    err_vec = np.sum(np.sqrt((wv_mtrx-wv_med)**2),axis = 1)
+    err_vec /= np.max(err_vec)
+    print(shape(err_vec))
+    print(shape(p2p))
+    
     wave_dff = np.diff(wv_mtrx,axis = 1)
+    
+    
     dp2p = np.max(wave_dff,axis = 1) -np.min(wave_dff,axis = 1)
     dp2pt = np.argmax(wave_dff,axis = 1) - np.argmin(wave_dff,axis = 1)
     #print(shape(wv_mtrx))
+    
+    
     wtr = vstack([hstack(pywt.wavedec(wv_mtrx[x,:],'db9',level = 3)) for x in range(shape(wv_mtrx)[0])])
     wtr2 = vstack([hstack(pywt.wavedec(wv_mtrx[x,:],'haar',level = 3)) for x in range(shape(wv_mtrx)[0])])
     #wv_mtrx = vstack([pywt.dwt(wv_mtrx[x,:],'db2')[1] for x in range(shape(wv_mtrx)[0])])
@@ -447,24 +469,40 @@ def sort_spikes(wv_mtrx):
     U = U[:,ind]
     s = s[ind]
     V = V[:,ind]
-    print shape(wtr)
-
+    #print shape(wtr)
+    
     
     #print(shape(array([p2p]).T))
     #print(shape(U))
     #print shape(wtr)
     #features = np.concatenate((wtr,array([p2p]).T,array([p2pt]).T,array([dp2p]).T,array([dp2pt]).T,U),axis = 1)
     #features = np.concatenate((array([p2p]).T,array([p2pt]).T,array([dp2p]).T,array([dp2pt]).T,U),axis = 1)
-    features = np.concatenate((array([p2p]).T,array([p2pt]).T,wtr[:,:3],U[:,:3]),axis = 1)
-    dbscan = cluster.DBSCAN(eps=0.2)
+    features = np.concatenate((array([p2p]).T,array([err_vec]).T,array([p2pt]).T,wtr[:,:3],U[:,:3]),axis = 1)
+    #features = np.concatenate((array([p2p]).T,array([p2pt]).T,wtr[:,:3],U[:,:3]),axis = 1)
+    dbscan = cluster.DBSCAN(eps=1.0)
     X = StandardScaler().fit_transform(features[:,:2])
-    dbscan.fit(X[:,:2])
-    idx = dbscan.labels_.astype(np.int)
+    
+    outliers_fraction = 0.25
+    clsf = svm.OneClassSVM(nu=0.95 * outliers_fraction + 0.05,
+                                     kernel="rbf", gamma=0.1)
+    
+    
+                                            
+           
+    #X = features[:,:5]
+    clsf.fit(X[:,:2])
+    y_pred = clsf.decision_function(X).ravel()
+    threshold = stats.scoreatpercentile(y_pred,
+                                            100 * outliers_fraction)
+    idx = y_pred > threshold
+    #dbscan.fit(X[:,:5])
+    #idx = dbscan.labels_.astype(np.int)
     
     #features = Ur
     #print(shape(features))
     #print shape(U)
-    #es, idx = kmeans2(X[:,:8],2)
+    es, idx = kmeans2(X[:,:4],2)
+    print es
     #es, idx = kmeans2(features[:,:3],2,minit = 'points')
     #es, idx = kmeans2(features[:,:8],4)
     return idx,features,U

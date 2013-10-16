@@ -9,7 +9,7 @@ import quantities as pq
     
 dataroot = '/Users/psilentp/Dropbox/Data/LeftRight/'
 
-fly = expl.FlyRecord(14,0,dataroot)
+fly = expl.FlyRecord(6,0,dataroot)
 
 numtrials = 15
     
@@ -18,6 +18,7 @@ def plot_trial_spktrns(indx = 5):
     print('plot spike rasters for expansion from left vs right -1 to 0.2 sec')
     spiketrains = list()
     for x in range(numtrials):
+        #spiketrains.append(fly.extract_trial_spikes(2,indx,x,-1,0.2))
         try:
             spiketrains.append(fly.extract_trial_spikes(2,indx,x,-1,0.2))
         except IndexError:
@@ -55,8 +56,8 @@ def plot_trial_spktrns(indx = 5):
         bins = np.arange(min(idx),max(idx)+2,1)
         hbins = np.histogram(idx,bins = bins)[0]
         hind = np.argsort(hbins[1:])+1
-        print hbins
-        print hind
+        #print hbins
+        #print hind
         #try:
         #    criterion = ((idx == bins[hind[-1]]) | (idx == bins[hind[-2]]))
         #except IndexError:
@@ -67,7 +68,7 @@ def plot_trial_spktrns(indx = 5):
         times = [st[i] for i,x in enumerate(criterion) if x]
         waveforms = [st.waveforms[i] for i,x in enumerate(criterion) if x]
         phases = np.array([st.annotations['phases'][2:-3][i] for i,x in enumerate(criterion) if x])
-        print len(st),len(times)
+        #print len(st),len(times)
         inc_trains.append(neo.SpikeTrain(times*pq.Quantity(1,'s'),
                                 st.t_stop,
                                 sampling_rate = st.sampling_rate,
@@ -78,13 +79,16 @@ def plot_trial_spktrns(indx = 5):
                                 
     expl.phase_raster([np.array(trn) for trn in inc_trains],[trn.annotations['phases'] for trn in inc_trains])
     ax3 = plb.subplot(4,1,4, sharex = ax0)
-    [plb.plot(np.array(trn),trn.annotations['phases'],'o',color = 'k',alpha = 0.2) for trn in inc_trains]
-    ax0.set_xbound(-1,0.2)
+    [plb.plot(np.array(trn),trn.annotations['phases']/np.pi,'o',color = 'k',alpha = 0.2) for trn in inc_trains]
+    ax0.set_xbound(-1,0.5)
     ax0.set_ybound(0,100)
+    ax1.set_ybound(-7,7)
+    ax3.set_ybound(0,2)
     plb.show()
     return inc_trains,features,crit,idx
     
 def plot_single_sweep_intro(trial_num,inc_trains,indx):
+    plb.figure()
     ephys_sweep = expl.ts(fly[2,indx,trial_num,'AMsysCh1'][0],-1,0.2)
     left_wing = expl.ts(fly[2,indx,trial_num,'LeftWing'][0],-1,0.2)
     right_wing = expl.ts(fly[2,indx,trial_num,'RightWing'][0],-1,0.2)
@@ -110,12 +114,16 @@ def plot_single_sweep_intro(trial_num,inc_trains,indx):
     
 def plot_feature_mtrx(features,idx,num_feat = 4):
     ind = 1
-    colors = ([([1,0,1],[1,0,0],[0,0,1],[0,1,1],[0,0.3,0.5])[i] for i in idx])
+    #rcolors = ([([1,0,1],[1,0,0],[0,0,1],[0,1,1],[0,0.3,0.5],[0.8,0.3,0.5])[i] for i in idx])
+    colors = plb.cm.jet((np.array(idx,dtype = float)+1)/np.max(idx)+1)
+    
     for x in range(num_feat):
         for y in range(num_feat):
             plb.subplot(num_feat,num_feat,ind)
             plb.scatter(features[:,x],features[:,y],c =  colors)
             ind += 1 
+
+
 #plot(sweep.times,sweep);[plot(x.times,x,color = 'r',lw =4,alpha =0.5) for x in inc_trains[0].waveforms]
 """
 ###########################
