@@ -34,7 +34,6 @@ def plot_trial_spktrns(indx = 5):
     #plot raster
     ax2 = plb.subplot(4,1,3, sharex = ax0)
     inc_trains = list()#spiketrains #list()
-
     
     for st in spiketrains:
         st = st[2:-3]

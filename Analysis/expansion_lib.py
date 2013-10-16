@@ -424,6 +424,7 @@ def get_spiketrain(sweep):
     return spike_train
 """
 
+
 def sort_spikes(wv_mtrx):
     from scipy.linalg import svd
     from scipy.cluster.vq import kmeans2
@@ -479,22 +480,22 @@ def sort_spikes(wv_mtrx):
     #features = np.concatenate((array([p2p]).T,array([p2pt]).T,array([dp2p]).T,array([dp2pt]).T,U),axis = 1)
     features = np.concatenate((array([p2p]).T,array([err_vec]).T,array([p2pt]).T,wtr[:,:3],U[:,:3]),axis = 1)
     #features = np.concatenate((array([p2p]).T,array([p2pt]).T,wtr[:,:3],U[:,:3]),axis = 1)
-    dbscan = cluster.DBSCAN(eps=1.0)
+    #dbscan = cluster.DBSCAN(eps=1.0)
     X = StandardScaler().fit_transform(features[:,:2])
     
-    outliers_fraction = 0.25
-    clsf = svm.OneClassSVM(nu=0.95 * outliers_fraction + 0.05,
-                                     kernel="rbf", gamma=0.1)
+    #outliers_fraction = 0.25
+    #clsf = svm.OneClassSVM(nu=0.95 * outliers_fraction + 0.05,
+    #                                 kernel="rbf", gamma=0.1)
     
     
                                             
            
     #X = features[:,:5]
-    clsf.fit(X[:,:2])
-    y_pred = clsf.decision_function(X).ravel()
-    threshold = stats.scoreatpercentile(y_pred,
-                                            100 * outliers_fraction)
-    idx = y_pred > threshold
+    #clsf.fit(X[:,:2])
+    #y_pred = clsf.decision_function(X).ravel()
+    #threshold = stats.scoreatpercentile(y_pred,
+    #                                        100 * outliers_fraction)
+    #idx = y_pred > threshold
     #dbscan.fit(X[:,:5])
     #idx = dbscan.labels_.astype(np.int)
     
