@@ -325,6 +325,22 @@ def ts(sweep,start,stop):
                             t_start = sweep.times[sta_index],
                             sampling_rate = sweep.sampling_rate)
 
+def get_wbas(L_h,R_h):
+    pks = get_wingbeats(L_h+R_h)
+    newpks,flips = recondition_peaks(L_h+R_h,pks)
+    L_a = np.zeros_like(L_h)
+    R_a = np.zeros_like(R_h)
+    p0 = newpks[0]
+    for pk in newpks[1:]:
+        L_a[p0:pk] = L_h[p0]
+        R_a[p0:pk] = R_h[p0]
+        p0 = pk
+    L_a[0:newpks[0]] = L_h[0]
+    R_a[0:newpks[0]] = R_h[0]
+    L_a[newpks[-1]:] = L_h[newpks[-1]]
+    R_a[newpks[-1]:] = R_h[newpks[-1]]
+    return L_a,R_a
+    
 def get_phase_trace(L_h,R_h):
     from scipy.signal import hilbert,find_peaks_cwt
     phases = np.angle(hilbert(get_low_filter(L_h+R_h,500)))
@@ -425,7 +441,7 @@ def get_spiketrain(sweep):
 """
 
 
-def sort_spikes(wv_mtrx):
+def sort_spikes(wv_mtrx,M):
     from scipy.linalg import svd
     from scipy.cluster.vq import kmeans2
     import sklearn
@@ -502,7 +518,9 @@ def sort_spikes(wv_mtrx):
     #features = Ur
     #print(shape(features))
     #print shape(U)
-    es, idx = kmeans2(X[:,:4],2)
+    #M = 2
+    M = np.array([[-0.72394844,0.6905216 ],[ 0.50694304,-0.48353598]])
+    es, idx = kmeans2(X[:,:4],M)
     print es
     #es, idx = kmeans2(features[:,:3],2,minit = 'points')
     #es, idx = kmeans2(features[:,:8],4)

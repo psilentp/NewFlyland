@@ -1,3 +1,5 @@
+#L#######closed loop##########
+
 import expansion_lib as expl
 import pylab as plb
 from scipy.signal import hilbert
@@ -92,6 +94,7 @@ def plot_single_sweep_intro(trial_num,inc_trains,indx):
     
     plb.plot(left_wing.times,phases,color = 'k',alpha = 0.5)
     tst_sweep = fly.extract_trial_spikes(2,indx,trial_num,-1,0.2)
+    colors = [plb.cm.jet(c/(2*np.pi)) for c in inc_trains[trial_num].annotations['phases']]
     plb.plot(np.array(inc_trains[trial_num].times),np.array(inc_trains[trial_num].annotations['phases']),'o',color = 'r')
     #plb.plot(np.array(tst_sweep.times),np.array(tst_sweep.annotations['phases']),'o',color = 'g')
     ax3 = plb.subplot(4,1,4,sharex = ax0)
