@@ -7,13 +7,13 @@ import quantities as pq
 #def get_phase(h1,h2):
 #    return angle(hilbert(expl.get_low_filter(h1+h2,500))))
     
-flynum = 14
-#flynum = 6 ##fly for first figure (sweep 14)
+flynum = 2
+#flynum = 6 ##fly for first figure (sweep 14)...plot_single_sweep_intro(14,inc_trains,5)
 #[[ 1.63812081  1.63159965]
 # [-0.38874933 -0.38720176]]
 dataroot = '/Users/psilentp/Dropbox/Data/LeftRight/'
 
-cluster_dict = {2:2,
+cluster_dict = {2:np.array([[-0.00885813,-0.73183966],[-0.93868879,0.56149279],[ 1.37972593,1.23868053]]),
                 3:2,
                 4:2,
                 5:np.array([[ 1.29689704,1.38142633],[-0.3490147,-0.37176281]]),
@@ -72,10 +72,13 @@ def plot_trial_spktrns(indx = 5):
         wvfm['id'] = i
     
     inc_trains = list()
-    filtered = [w for w in wvfm_list if w['id'] == 1]
+    filtered1 = [w for w in wvfm_list if w['id'] == 1]
+    filtered2 = [w for w in wvfm_list if w['id'] == 0]
     #print len(filtered), 0.5*len(wvfm_list)
-    if len(filtered) < 0.5*len(wvfm_list):
-        filtered = [w for w in wvfm_list if (w['id'] == 0)]
+    if len(filtered1) > len(filtered2):
+        filtered = filtered1
+    else:
+        filtered = filtered2
     #print len(filtered), 0.5*len(wvfm_list)
     for trial,st in enumerate(spiketrains):
         st = st[2:-2]

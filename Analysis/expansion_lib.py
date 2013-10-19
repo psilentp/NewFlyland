@@ -20,7 +20,7 @@ L_V_lookup = {1:5,2:20,3:50,4:100,5:200}
 pattern_xnum = 768
 deg_per_xstp = 360./pattern_xnum
 ol_volts_per_deg = 10.0/(pattern_xnum*deg_per_xstp)
-cl_volts_per_rad = 5/pi
+cl_volts_per_rad = 5/(np.pi)
 expan_transform = lambda x:x/ol_volts_per_deg
 fix_transform = lambda x:x/cl_volts_per_rad
 
@@ -519,7 +519,7 @@ def sort_spikes(wv_mtrx,M):
     #print(shape(features))
     #print shape(U)
     #M = 2
-    M = np.array([[-0.72394844,0.6905216 ],[ 0.50694304,-0.48353598]])
+    #M = np.array([[-0.72394844,0.6905216 ],[ 0.50694304,-0.48353598]])
     es, idx = kmeans2(X[:,:4],M)
     print es
     #es, idx = kmeans2(features[:,:3],2,minit = 'points')
