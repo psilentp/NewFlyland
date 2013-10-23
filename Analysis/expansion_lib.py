@@ -300,24 +300,7 @@ class FlyRecord(object):
 #    from scipy import hilbert
 #    phases = np.angle(hilbert(get_low_filter(L_h+R_h,500)))
     
-    
 
-"""
-def plot_ephys_sweep(fly,findex,pindex,sweepnum):
-    times = fly['AMsysCh1',findex,pindex][sweepnum].times[-12000:-6000]
-    fig = figure(figsize=(6,12))
-    ax1 = subplot(3,1,1)
-    plot(times,expan_transform(fly['Xpos',findex,pindex][sweepnum][-12000:-6000]))
-    ax2 = subplot(3,1,2,sharex = ax1)
-    plot(times,fly['AMsysCh1',findex,pindex][sweepnum][-12000:-6000])
-    ax3 = subplot(3,1,3,sharex = ax1)
-    plot(times,fly['LeftWing',findex,pindex][sweepnum][-12000:-6000])
-    plot(times,fly['RightWing',findex,pindex][sweepnum][-12000:-6000])
-    return fig
- """
-
-
-    
 def ts(sweep,start,stop):
     sta_index = argwhere(sweep.times >=start)[0]
     stp_index = argwhere(sweep.times >=stop)[0]
