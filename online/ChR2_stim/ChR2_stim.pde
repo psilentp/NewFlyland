@@ -7,21 +7,26 @@
  Ported to Maple from the Arduino example 27 May 2011
  By Marti Bolivar
 */
-int
+int go_pin = 30;
+
 void setup() {
     // Set up the built-in LED pin as an output:
     pinMode(0, OUTPUT_OPEN_DRAIN);
     pinMode(19,OUTPUT);
+    pinMode(go_pin,INPUT);
     attachInterrupt(31,triggered,FALLING);
 }
 
 void loop() {
-    delay(5);
     digitalWrite(0,HIGH);
     digitalWrite(19,LOW);
 }
 
 void triggered(){
-  digitalWrite(0,LOW);
-  digitalWrite(19,HIGH);
+  if(digitalRead(go_pin)){
+    digitalWrite(0,LOW);
+    digitalWrite(19,HIGH);
+    delay(4);
+  }
 }
+
