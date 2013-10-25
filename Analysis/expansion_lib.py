@@ -100,12 +100,15 @@ class FlyRecord(object):
         #holds the asignals
         seg = block.segments[0]
         #get and sort the trial presentation record
-        trial_matrix = sio.loadmat(self.datadir + '/' + self.mat_files[self.rep_ind])['datarecord'][0]
-        #now add an index to the first column.
-        self.trial_matrix = np.array([[i,x[0][0][0],x[1][0][0]] for i,x in enumerate(trial_matrix)])
-        #sort the data: first by presentation order, then by function type, then by position.
-        self.sorted_trial_indices = lexsort((self.trial_matrix[:,0],self.trial_matrix[:,1],self.trial_matrix[:,2]))
-        #make a lookup dictionary for the signal indicies
+        try:
+            trial_matrix = sio.loadmat(self.datadir + '/' + self.mat_files[self.rep_ind])['datarecord'][0]
+            #now add an index to the first column.
+            self.trial_matrix = np.array([[i,x[0][0][0],x[1][0][0]] for i,x in enumerate(trial_matrix)])
+            #sort the data: first by presentation order, then by function type, then by position.
+            self.sorted_trial_indices = lexsort((self.trial_matrix[:,0],self.trial_matrix[:,1],self.trial_matrix[:,2]))
+            #make a lookup dictionary for the signal indicies
+        except IndexError:
+            pass
         self.signals = dict()
         for index,sig_name in enumerate(h['ADCChNames'] for h in hdr['listADCInfo']):
             self.signals[sig_name] = seg.analogsignals[index]
