@@ -50,7 +50,7 @@ for rep = 1:5
         Panel_com('set_posfunc_id',[1 approach_time]);pause(0.01); %position function to run on channel 1 (X) 
         Panel_com('set_funcx_freq', expan_update_freq);pause(0.1); %run at 500hz 2ms steps
         Panel_com('start');
-        pause(5.2);
+        pause(1.2);
         record_index = record_index+1;
         %%Panel_com('ident_compress_off');pause(0.005);
         i
