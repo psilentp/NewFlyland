@@ -425,7 +425,10 @@ def get_spiketrain(sweep):
                                 pk_ind = pk_ind)
     return spike_train
 """
-
+def edge_triggered_sweeps(edge_sweep,signal_sweep,thresh):
+    edgepoints = np.argwhere(np.diff(np.array(edge_sweep<1,dtype = int)))>0.5)
+    fpr 
+    pass
 
 def sort_spikes(wv_mtrx,M):
     from scipy.linalg import svd
