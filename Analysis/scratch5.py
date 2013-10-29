@@ -1,3 +1,5 @@
+############### figure for MD's alan talk open loop summary ###############
+
 import expansion_lib as expl
 import pylab as plb
 from scipy.signal import hilbert

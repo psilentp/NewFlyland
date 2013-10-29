@@ -1,4 +1,4 @@
-#L#######closed loop##########
+#L#######closed loop figure for MD's alan talk ##########
 
 import expansion_lib as expl
 import pylab as plb
