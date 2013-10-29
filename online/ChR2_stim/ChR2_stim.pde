@@ -25,7 +25,7 @@ void loop() {
 
 void triggered(){
   if(digitalRead(go_pin)){
-    if(wb_count > 10){
+    if(wb_count > 2){
       wb_count = 0;
       digitalWrite(0,LOW);
       digitalWrite(19,HIGH);
