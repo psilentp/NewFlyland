@@ -47,7 +47,9 @@ class FlyRecord(object):
         self.olepoch = olepoch
         self.tail = pq.Quantity(.4,'s')
         self.processed_signals = dict()
-        self.processing_params = dict()
+        self.wb_processing_params = dict()
+        self.spk_sorting_params = dict()
+        self.sorted_spikes = dict()
         self.load_data()
         
         self.left_window = int(self.clepoch/self.dt)
@@ -169,20 +171,84 @@ class FlyController(object):
     
     def extract_spike_pool(self):
         """extract the pool of potential spikes"""
-        try:
-            phys_sig = self.fly.signals['AMsysCh1']
-            thresh = self.fly.processing_params['spk_pool_thresh']
-            wl= self.fly.processing_params['spk_window_left']
-            wr= self.fly.processing_params['spk_window_right']
-            filter_window = self.fly.processing_params['spk_pool_filter_window']
-            spike_pool = get_spiketrain(phys_sig,
+        phys_sig = self.fly.signals['AMsysCh1']
+        thresh = self.fly.spk_sorting_params['spk_pool_thresh']
+        wl= self.fly.spk_sorting_params['spk_window_left']
+        wr= self.fly.spk_sorting_params['spk_window_right']
+        filter_window = self.fly.spk_sorting_params['spk_pool_filter_window']
+        spike_pool = get_spiketrain(phys_sig,
                                     thresh = thresh,
                                     wl=wl,
                                     wr=wr,
                                     filter_window = filter_window)
         self.fly.processed_signals['spike_pool'] = spike_pool
-        
+       
 
+class SpikeSorter(object):
+        def __init__(self,**argv):
+            self.sorting_params = argv
+        
+        def sort(self,spike_pool,M=2):
+            from scipy.linalg import svd
+            from scipy.cluster.vq import kmeans2
+            import sklearn
+            from sklearn import cluster, datasets
+            from sklearn.metrics import euclidean_distances
+            from sklearn.neighbors import kneighbors_graph
+            from sklearn.preprocessing import StandardScaler
+            from sklearn import svm
+            from sklearn.covariance import EllipticEnvelope
+            import pywt
+            from scipy import stats
+            
+            spike_sample_indx = np.random.random_integers(0,
+                                            len(spike_pool),
+                                            self.sorting_params['sample_size'])
+                            
+            
+            wv_mtrx = np.vstack([np.array(spike_pool.waveforms[idx])
+                                for idx in spike_sample_indx])
+            
+            p2p = np.max(wv_mtrx,axis = 1) -np.min(wv_mtrx,axis = 1)
+            p2pt = np.argmax(wv_mtrx,axis = 1) - np.argmin(wv_mtrx,axis = 1)
+    
+    
+            ##medsweep erro
+            wv_med = np.median(wv_mtrx,axis = 0)
+            err_vec = np.sum(np.sqrt((wv_mtrx-wv_med)**2),axis = 1)
+            err_vec /= np.max(err_vec)
+            print(shape(err_vec))
+            print(shape(p2p))
+    
+            wave_dff = np.diff(wv_mtrx,axis = 1)
+    
+    
+            dp2p = np.max(wave_dff,axis = 1) -np.min(wave_dff,axis = 1)
+            dp2pt = np.argmax(wave_dff,axis = 1) - np.argmin(wave_dff,axis = 1)
+            #print(shape(wv_mtrx))
+    
+    
+            wtr = vstack([hstack(pywt.wavedec(wv_mtrx[x,:],'db9',level = 3))
+                                            for x in range(shape(wv_mtrx)[0])])
+            wtr2 = vstack([hstack(pywt.wavedec(wv_mtrx[x,:],'haar',level = 3)) 
+                                            for x in range(shape(wv_mtrx)[0])])
+            wv_mean = np.mean(wv_mtrx)
+            datamtrx = wv_mtrx-wv_mean
+            U,s,Vt = svd(datamtrx,full_matrices=False)
+            V = Vt.T
+
+            ind = np.argsort(s)[::-1]
+            U = U[:,ind]
+            s = s[ind]
+            V = V[:,ind]
+
+            features = np.concatenate((array([p2p]).T,array([err_vec]).T,array([p2pt]).T,wtr[:,:3],U[:,:3]),axis = 1)
+            X = StandardScaler().fit_transform(features[:,:2])
+
+            es, idx = kmeans2(X[:,:4],M)
+            self.idx = idx
+            self.wv_mtrx = wv_mtrx
+        
 def get_fly_in_rootdir(data_root,fly_number,rep_ind):
         data_dir = data_root + '/Fly%s'%(fly_number)
         data_files = os.listdir(data_dir)
