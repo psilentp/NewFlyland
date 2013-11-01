@@ -8,7 +8,7 @@ import quantities as pq
 #def get_phase(h1,h2):
 #    return angle(hilbert(expl.get_low_filter(h1+h2,500))))
     
-flynum = 14
+flynum = 24
 #flynum = 6 ##fly for first figure (sweep 14)...plot_single_sweep_intro(14,inc_trains,5)
 #[[ 1.63812081  1.63159965]
 # [-0.38874933 -0.38720176]]
@@ -32,7 +32,11 @@ cluster_dict = {2:np.array([[-0.00885813,-0.73183966],[-0.93868879,0.56149279],[
                 17:2,
                 18:2,
                 19:2,
-                20:2}
+                20:2,
+                22:2,
+                23:2,
+                24:2,
+                25:2}
 
 fly = expl.FlyRecord(flynum,0,dataroot)
 
