@@ -10,7 +10,7 @@ Panel_com('stop');pause(0.005);
 Panel_com('set_pattern_id',fixation_pat);pause(0.005); %stripe fixation pattern
 Panel_com('set_mode',[1 1]);pause(0.05); %set closed loop X closed loop Y
 Panel_com('set_velfunc_id',[0 0]);pause(0.01); %use default function on x and y channel (is this nessessary?)
-Panel_com('send_gain_bias',[-20.0,0,0,0]);pause(0.005);%
+Panel_com('send_gain_bias',[30.0,0,0,0]);pause(0.005);%
 Panel_com('set_position',[48 1]);pause(0.005); % start at close to fixation
 Panel_com('start');
 pause(5);
@@ -35,7 +35,7 @@ for rep = 1:5
         Panel_com('set_pattern_id',fixation_pat);pause(0.005); %stripe fixation pattern
         Panel_com('set_mode',[1 1]);pause(0.05); %set closed loop X closed loop Y
         Panel_com('set_velfunc_id',[0 0]);pause(0.01); %use default function on x and y channel (is this nessessary?)
-        Panel_com('send_gain_bias',[-20.0,0,0,0]);pause(0.005);%
+        Panel_com('send_gain_bias',[30.0,0,0,0]);pause(0.005);%
         Panel_com('set_position',[48 1]);pause(0.005); % start at close to fixation
         Panel_com('start');
         pause(5);
@@ -62,7 +62,7 @@ Panel_com('stop');pause(0.005);
 Panel_com('set_pattern_id',fixation_pat);pause(0.005); %stripe fixation pattern
 Panel_com('set_mode',[1 1]);pause(0.05); %set closed loop X closed loop Y
 Panel_com('set_velfunc_id',[0 0]);pause(0.01); %use default function on x and y channel (is this nessessary?)
-Panel_com('send_gain_bias',[-20.0,0,0,0]);pause(0.005);%
+Panel_com('send_gain_bias',[30.0,0,0,0]);pause(0.005);%
 Panel_com('set_position',[48 1]);pause(0.005); % start at close to fixation
 Panel_com('start');
 pause(10);
