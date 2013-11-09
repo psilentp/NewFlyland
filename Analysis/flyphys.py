@@ -55,6 +55,7 @@ class FlyRecord(object):
         self.left_window = int(self.clepoch/self.dt)
         self.right_window = int(self.olepoch/self.dt + self.tail/self.dt)
         self.min_wbf = min_wbf
+        self.verbose = True
         
     def load_data(self):
         importer = neo.io.AxonIO(filename = self.axon_file_path)
@@ -127,17 +128,12 @@ class FlyRecord(object):
         ave = reduce(lambda x,y:x+y,siglist)/len(siglist)  
         return ave
 
-class FlyController(object):
-    
-    def __init__(self,fly):
-        self.fly = fly
-        self.verbose = True
-         
     def process_wb_signals(self):
+        """extract params from the hutchens.. phase ventral flip ect.."""
         from scipy.signal import hilbert
-        pts_per_wb = 0.005/self.fly.dt #for 200 Hz wb
-        L_h = self.fly.signals['LeftWing']
-        R_h = self.fly.signals['RightWing']
+        pts_per_wb = 0.005/selfdt #for 200 Hz wb
+        L_h = self.signals['LeftWing']
+        R_h = self.signals['RightWing']
         arr = L_h+R_h
         if self.verbose:print('calculating flight mask')
         flight_mask = window_stdev(L_h+R_h,int(5*pts_per_wb)) < 0.5 #window apx 5 wb
@@ -162,28 +158,42 @@ class FlyController(object):
         L_a[newpks[-1]:] = L_h[newpks[-1]]
         R_a[newpks[-1]:] = R_h[newpks[-1]]
         if self.verbose:print('updating processed_signals dict')
-        self.fly.processed_signals['wb_phase'] = phases
-        self.fly.processed_signals['wb_peaks'] = newpks
-        self.fly.processed_signals['wb_flips'] = flips
-        self.fly.processed_signals['flight_mask'] = flight_mask
-        self.fly.processed_signals['LeftAmp'] = L_a
-        self.fly.processed_signals['RightAmp'] = R_a
+        self.processed_signals['wb_phase'] = phases
+        self.processed_signals['wb_peaks'] = newpks
+        self.processed_signals['wb_flips'] = flips
+        self.processed_signals['flight_mask'] = flight_mask
+        self.processed_signals['LeftAmp'] = L_a
+        self.processed_signals['RightAmp'] = R_a
     
     def extract_spike_pool(self):
         """extract the pool of potential spikes"""
-        phys_sig = self.fly.signals['AMsysCh1']
-        thresh = self.fly.spk_sorting_params['spk_pool_thresh']
-        wl= self.fly.spk_sorting_params['spk_window_left']
-        wr= self.fly.spk_sorting_params['spk_window_right']
-        filter_window = self.fly.spk_sorting_params['spk_pool_filter_window']
-        spike_pool = get_spiketrain(phys_sig,
+        phys_sig = self.signals['AMsysCh1']
+        thresh = self.pool_params['spk_pool_thresh']
+        wl= self.pool_params['spk_window_left']
+        wr= self.pool_params['spk_window_right']
+        filter_window = self.pool_params['spk_pool_filter_window']
+        spike_pool = get_spike_pool(phys_sig,
                                     thresh = thresh,
                                     wl=wl,
                                     wr=wr,
                                     filter_window = filter_window)
-        self.fly.processed_signals['spike_pool'] = spike_pool
-       
+        self.processed_signals['spike_pool'] = spike_pool
+        
+class FlyController(object):
+    
+    def __init__(self,fly):
+        self.fly = fly
+        
 
+def plot_testdata(sdata,trace):
+    ax =  plb.subplot(len(sdata.test_trains),1,1)
+    for i,st in enumerate(sdata.test_trains):
+        plb.subplot(len(sdata.test_trains),1,i+1,sharex = ax,sharey = ax)
+        shift = st.waveforms[0].times[0]
+        sweep_slice = ts(trace,st.t_start,st.t_stop) 
+        plb.plot(sweep_slice.times-shift,sweep_slice,color = 'k')
+        [plb.plot(wf.times - shift,wf,color = 'b') for wf in st.waveforms]
+        
 class SpikeSorter(object):
         def __init__(self,**argv):
             self.sorting_params = argv
@@ -205,7 +215,6 @@ class SpikeSorter(object):
                                             len(spike_pool),
                                             self.sorting_params['sample_size'])
                             
-            
             wv_mtrx = np.vstack([np.array(spike_pool.waveforms[idx])
                                 for idx in spike_sample_indx])
             
@@ -275,88 +284,3 @@ def get_fly_in_rootdir(data_root,fly_number,rep_ind):
                         post_process_path = post_process_path)
         return fly
         
-        
-        
-
-def sort_spikes(wv_mtrx,M):
-    from scipy.linalg import svd
-    from scipy.cluster.vq import kmeans2
-    import sklearn
-    from sklearn import cluster, datasets
-    from sklearn.metrics import euclidean_distances
-    from sklearn.neighbors import kneighbors_graph
-    from sklearn.preprocessing import StandardScaler
-    from sklearn import svm
-    from sklearn.covariance import EllipticEnvelope
-    import pywt
-    from scipy import stats
-    
-    p2p = np.max(wv_mtrx,axis = 1) -np.min(wv_mtrx,axis = 1)
-    p2pt = np.argmax(wv_mtrx,axis = 1) - np.argmin(wv_mtrx,axis = 1)
-    
-    
-    ##medsweep erro
-    wv_med = np.median(wv_mtrx,axis = 0)
-    err_vec = np.sum(np.sqrt((wv_mtrx-wv_med)**2),axis = 1)
-    err_vec /= np.max(err_vec)
-    print(shape(err_vec))
-    print(shape(p2p))
-    
-    wave_dff = np.diff(wv_mtrx,axis = 1)
-    
-    
-    dp2p = np.max(wave_dff,axis = 1) -np.min(wave_dff,axis = 1)
-    dp2pt = np.argmax(wave_dff,axis = 1) - np.argmin(wave_dff,axis = 1)
-    #print(shape(wv_mtrx))
-    
-    
-    wtr = vstack([hstack(pywt.wavedec(wv_mtrx[x,:],'db9',level = 3)) for x in range(shape(wv_mtrx)[0])])
-    wtr2 = vstack([hstack(pywt.wavedec(wv_mtrx[x,:],'haar',level = 3)) for x in range(shape(wv_mtrx)[0])])
-    #wv_mtrx = vstack([pywt.dwt(wv_mtrx[x,:],'db2')[1] for x in range(shape(wv_mtrx)[0])])
-    #print(shape(wv_mtrx))
-    wv_mean = np.mean(wv_mtrx)
-    datamtrx = wv_mtrx-wv_mean
-    U,s,Vt = svd(datamtrx,full_matrices=False)
-    V = Vt.T
-
-    ind = np.argsort(s)[::-1]
-    U = U[:,ind]
-    s = s[ind]
-    V = V[:,ind]
-    #print shape(wtr)
-    #print(shape(array([p2p]).T))
-    #print(shape(U))
-    #print shape(wtr)
-    #features = np.concatenate((wtr,array([p2p]).T,array([p2pt]).T,array([dp2p]).T,array([dp2pt]).T,U),axis = 1)
-    #features = np.concatenate((array([p2p]).T,array([p2pt]).T,array([dp2p]).T,array([dp2pt]).T,U),axis = 1)
-    features = np.concatenate((array([p2p]).T,array([err_vec]).T,array([p2pt]).T,wtr[:,:3],U[:,:3]),axis = 1)
-    #features = np.concatenate((array([p2p]).T,array([p2pt]).T,wtr[:,:3],U[:,:3]),axis = 1)
-    #dbscan = cluster.DBSCAN(eps=1.0)
-    X = StandardScaler().fit_transform(features[:,:2])
-    
-    #outliers_fraction = 0.25
-    #clsf = svm.OneClassSVM(nu=0.95 * outliers_fraction + 0.05,
-    #                                 kernel="rbf", gamma=0.1)
-    
-    
-                                            
-           
-    #X = features[:,:5]
-    #clsf.fit(X[:,:2])
-    #y_pred = clsf.decision_function(X).ravel()
-    #threshold = stats.scoreatpercentile(y_pred,
-    #                                        100 * outliers_fraction)
-    #idx = y_pred > threshold
-    #dbscan.fit(X[:,:5])
-    #idx = dbscan.labels_.astype(np.int)
-    
-    #features = Ur
-    #print(shape(features))
-    #print shape(U)
-    #M = 2
-    #M = np.array([[-0.72394844,0.6905216 ],[ 0.50694304,-0.48353598]])
-    es, idx = kmeans2(X[:,:4],M)
-    print es
-    #es, idx = kmeans2(features[:,:3],2,minit = 'points')
-    #es, idx = kmeans2(features[:,:8],4)
-    return idx,features,U
