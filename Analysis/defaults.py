@@ -1,6 +1,6 @@
 pca_trans = {'trans_dims':3,'pca_whiten':True}
 
-km_cluster = {'kmeans_nc':2}
+km_cluster = {'kmeans_nc':2,'init':'k-means++'}
 randseq = {'seq_len':100,'n_seq':10}
 
 

@@ -44,26 +44,27 @@ class SampleRandomSeq(SpkSelector):
         n_seq = self.params['n_seq']
         import random
         idx = self.collection_ind()
-        seq_starts = random.sample(idx[::seq_len],n_seq)
-        seq_starts.sort()
-        for i,st in enumerate(seq_starts):
+        self.seq_starts = random.sample(idx[::seq_len],n_seq)
+        self.seq_starts.sort()
+        for i,st in enumerate(self.seq_starts):
             self.labels[st:st+seq_len] = 'seq%s'%(i)
 
 class KMeansCluster(SpkSelector):
     def select(self):
         from sklearn.cluster import KMeans
         X = self.input_mtrx[self.collection_ind()]
-        est = KMeans(n_clusters= self.params['kmeans_nc'])
-        est.fit(X)
-        labels = est.labels_
+        self.est = KMeans(n_clusters= self.params['kmeans_nc'],
+                          init = self.params['init'])
+        self.est.fit(X)
+        labels = self.est.labels_
         self.labels[self.collection_ind()] = labels
         
 class PCATransform(SpkTransformer):
     def transform(self):
         from sklearn import decomposition
         wv_mtrx = self.collection_wvmtrx()
-        pca = decomposition.PCA(n_components=self.params['trans_dims'],
-                                whiten = self.params['pca_whiten'])
-        pca.fit(wv_mtrx)
-        self.trnsmtrx[self.collection_ind(),:] = pca.transform(wv_mtrx)
+        self.est = decomposition.PCA(n_components=self.params['trans_dims'],
+                                     whiten = self.params['pca_whiten'])
+        self.est.fit(wv_mtrx)
+        self.trnsmtrx[self.collection_ind(),:] = self.est.transform(wv_mtrx)
         

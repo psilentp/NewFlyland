@@ -16,7 +16,8 @@ fly = fph.get_fly_in_rootdir(dataroot,2,0)
 fly_cntrlr = fph.FlyController(fly)
 fly.pool_params = defaults.pool_params
 
-fly.extract_spike_pool()
+#fly.extract_spike_pool()
+#fly.process_wb_signals()
 st = fly.processed_signals['spike_pool']
 
 ######random selection##########
@@ -51,3 +52,5 @@ for wf,lb in zip(km_selector.collection_wvmtrx(),km_selector.labels[km_selector.
 fig = figure()
 ax = fig.add_subplot(111, projection='3d')
 ax.scatter(pca_transformer.collection_trnsmtrx()[:,0],pca_transformer.collection_trnsmtrx()[:,1],pca_transformer.collection_trnsmtrx()[:,2],c = colors)
+show()
+fly.save_data('flydata.cpkl')

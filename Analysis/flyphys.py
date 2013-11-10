@@ -50,33 +50,63 @@ class FlyRecord(object):
         self.wb_processing_params = dict()
         self.spk_sorting_params = dict()
         self.sorted_spikes = dict()
-        self.load_data()
-        
-        self.left_window = int(self.clepoch/self.dt)
-        self.right_window = int(self.olepoch/self.dt + self.tail/self.dt)
         self.min_wbf = min_wbf
         self.verbose = True
+        self.load_data()
+        
+
         
     def load_data(self):
-        importer = neo.io.AxonIO(filename = self.axon_file_path)
-        block = importer.read_block()
-        hdr = importer.read_header()
-        #holds the asignals
-        seg = block.segments[0]
-        #get and sort the trial presentation record
-        trial_matrix = sio.loadmat(self.mat_file_path)['datarecord'][0]
-        #now add an index to the first column.
-        self.trial_matrix = np.array([[i,x[0][0][0],x[1][0][0]] for i,x in enumerate(trial_matrix)])
-        #sort the data: first by presentation order, then by function type, then by position.
-        self.sorted_trial_indices = lexsort((self.trial_matrix[:,0],self.trial_matrix[:,1],self.trial_matrix[:,2]))
-        #make a lookup dictionary for the signal indicies
-        self.signals = dict()
-        for index,sig_name in enumerate(h['ADCChNames'] for h in hdr['listADCInfo']):
-            self.signals[sig_name] = seg.analogsignals[index]
-        #pull out the trial start indicies
-        self.dt = self.signals['Sync'].times[1]
-        self.trial_start_indicies = where(diff(where(self.signals['Ypos'] <1,1,0))>0)[0]
+        if self.post_process_path == None:
+            importer = neo.io.AxonIO(filename = self.axon_file_path)
+            block = importer.read_block()
+            hdr = importer.read_header()
+            #holds the asignals
+            seg = block.segments[0]
+            #get and sort the trial presentation record
+            trial_matrix = sio.loadmat(self.mat_file_path)['datarecord'][0]
+            #now add an index to the first column.
+            self.trial_matrix = np.array([[i,x[0][0][0],x[1][0][0]] for i,x in enumerate(trial_matrix)])
+            #sort the data: first by presentation order, then by function type, then by position.
+            self.sorted_trial_indices = lexsort((self.trial_matrix[:,0],self.trial_matrix[:,1],self.trial_matrix[:,2]))
+            #make a lookup dictionary for the signal indicies
+            self.signals = dict()
+            for index,sig_name in enumerate(h['ADCChNames'] for h in hdr['listADCInfo']):
+                self.signals[sig_name] = seg.analogsignals[index]
+        
+            #pull out the trial start indicies
+            self.dt = self.signals['Sync'].times[1]
+            self.trial_start_indicies = where(diff(where(self.signals['Ypos'] <1,1,0))>0)[0]
+            self.left_window = int(self.clepoch/self.dt)
+            self.right_window = int(self.olepoch/self.dt + self.tail/self.dt)
+        else:
+            import cPickle as cpkl
+            f = open(self.post_process_path,'rb')
+            pkl_data = cpkl.load(f)
+            self.signals = pkl_data['signals']
+            self.trial_matrix = pkl_data['trial_matrix']
+            self.processed_signals = pkl_data['processed_signals']
+            self.trial_start_indicies = pkl_data['trial_start_indicies']
+            self.dt = pkl_data['dt']
+            self.pool_params = pkl_data['pool_params']
+            self.left_window = pkl_data['left_window']
+            self.right_window = pkl_data['right_window']
+            f.close()
     
+    def save_data(self,filename):
+        import cPickle as cpkl
+        f = open(filename,'wb')
+        saverecord = {'signals':self.signals,
+                      'trial_matrix':self.trial_matrix,
+                      'processed_signals':self.processed_signals,
+                      'trial_start_indicies':self.trial_start_indicies,
+                      'dt':self.dt,
+                      'pool_params':self.pool_params,
+                      'left_window':self.left_window,
+                      'right_window':self.right_window}
+        cpkl.dump(saverecord,f)
+        f.close()
+        
     def __getitem__(self,k):
         """allow slicing by according to: 
         self[function_index,position_index,trial_num,'SignalString'] 
@@ -131,7 +161,7 @@ class FlyRecord(object):
     def process_wb_signals(self):
         """extract params from the hutchens.. phase ventral flip ect.."""
         from scipy.signal import hilbert
-        pts_per_wb = 0.005/selfdt #for 200 Hz wb
+        pts_per_wb = 0.005/self.dt #for 200 Hz wb
         L_h = self.signals['LeftWing']
         R_h = self.signals['RightWing']
         arr = L_h+R_h
@@ -276,7 +306,8 @@ def get_fly_in_rootdir(data_root,fly_number,rep_ind):
             post_process_path = data_dir + '/' + post_process_files[rep_ind]
         except IndexError:
             post_process_path = None
-        axon_file_path,mat_file_path,exp_note_path,post_process_path
+
+        #axon_file_path,mat_file_path,exp_note_path,post_process_path
         fly = FlyRecord(fly_number,
                         axon_file_path = axon_file_path,
                         mat_file_path = mat_file_path,

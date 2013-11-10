@@ -34,7 +34,21 @@ def recondition_peaks(signal,pks):
         except IndexError:
             pass
     return newpks,flips
-    
+
+def _new_spikepool(cls,signal, t_stop, units=None, dtype=np.float,
+                    copy=True, sampling_rate=None, t_start=0.0 * pq.s,
+                    waveforms=None, left_sweep=None, name=None,
+                    file_origin=None, description=None, annotations=None):
+        
+    return SpikePool(signal,
+    			t_stop = t_stop,
+                units = units,
+                sampling_rate = sampling_rate,
+                waveforms = waveforms,
+                left_sweep = left_sweep,
+                t_start = t_start,
+                **annotations)
+
 class SpikePool(neo.SpikeTrain):
     """hold a Sub group of spikes for further processing - keep track of spike
     pool and spike pool indecies so it is easy to mix the results back in"""
@@ -56,17 +70,25 @@ class SpikePool(neo.SpikeTrain):
                                name = wf.name,
                                t_start = wf.t_start - shift)
                                for wf in st.waveforms]
-        pk_ind = self.annotations['pk_ind'][sli]
+        #pk_ind = self.annotations['pk_ind'][sli]
         t_start = wvfrms[0].times[0]
         t_stop = wvfrms[-1].times[-1]
-        return SpikeCollection(np.array(st)-float(shift),
+        return SpikePool(np.array(st)-float(shift),
                         units = st.units,
                         sampling_rate = st.sampling_rate,
                         waveforms = wvfrms,
                         left_sweep = st.left_sweep,
                         t_start = t_start,
-                        t_stop = t_stop,
-                        pk_ind = pk_ind)
+                        t_stop = t_stop)
+        
+    def __reduce__(self):
+    	return _new_spikepool, (self.__class__, np.array(self),
+                                 self.t_stop, self.units, self.dtype, True,
+                                 self.sampling_rate, self.t_start,
+                                 self.waveforms, self.left_sweep,
+                                 self.name, self.file_origin, self.description,
+                                 self.annotations)
+       
                                 
 def get_spike_pool(sweep,thresh = 10,wl=25,wr=20,filter_window = 35):
     from scipy.signal import medfilt
