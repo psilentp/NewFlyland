@@ -19,13 +19,35 @@ fly.pool_params = defaults.pool_params
 fly.extract_spike_pool()
 st = fly.processed_signals['spike_pool']
 
-rand_sorter = srtr.SampleRandomSeq(st,ones_like(st),defaults.randseq)
-rand_sorter.sort(100,10)
-rand_mask = rand_sorter.mask_from_labels(['seq'+str(x) for x in range(10)])
-pca_sorter = srtr.PCACluster(st,rand_mask,defaults.pca_cluster)
-pca_sorter.sort()
+######random selection##########
+rand_selector = srtr.SampleRandomSeq(st,
+									 ones_like(st),
+									 st.wv_mtrx,
+									 defaults.randseq)
+rand_selector.select(100,10)
+rand_mask = rand_selector.mask_from_labels(['seq'+str(x) for x in range(10)])
 
+#####PCA transformation ##########
+pca_transformer = srtr.PCATransform(st,
+									rand_mask,
+									defaults.pca_trans)
+pca_transformer.transform()
+
+
+#####K-means sorting ##########
+km_selector = srtr.KMeansCluster(st,
+							   rand_mask,
+							   pca_transformer.trnsmtrx,
+							   defaults.km_cluster)
+km_selector.select()
+
+
+colors = cm.jet(km_selector.labels[km_selector.collection_ind()].astype(float)/2.0+0.1)
 figure()
-for wf,lb in zip(pca_sorter.selected_wvmtrx(),pca_sorter.labels[pca_sorter.selected_ind()]):
+for wf,lb in zip(km_selector.collection_wvmtrx(),km_selector.labels[km_selector.collection_ind()]):
     subplot(2,1,lb)
     plot(wf,color = cm.jet(lb.astype(np.float)/2.0),alpha = 0.2)
+
+fig = figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(pca_transformer.collection_trnsmtrx()[:,0],pca_transformer.collection_trnsmtrx()[:,1],pca_transformer.collection_trnsmtrx()[:,2],c = colors)
