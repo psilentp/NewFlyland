@@ -23,6 +23,13 @@ class SpkSelector(SpkCollection):
         mask = np.in1d(self.labels,select_labels)
         return mask
         
+    def ind_from_labels(self,select_labels):
+        mask = self.mask_from_labels(select_labels)
+        return self.spike_pool.spk_ind[np.argwhere(mask)[:,0]]
+        
+    def wv_mtrx_from_labels(self,select_labels):
+        return self.spike_pool.wv_mtrx[self.ind_from_labels(select_labels)]
+        
     def select(self):
         pass
 
@@ -49,6 +56,30 @@ class SampleRandomSeq(SpkSelector):
         for i,st in enumerate(self.seq_starts):
             self.labels[st:st+seq_len] = 'seq%s'%(i)
 
+class SpectralCluster(SpkSelector):
+    def select(self):
+        from sklearn.metrics import euclidean_distances
+        wv_mtrx = self.collection_wvmtrx()
+        #print "computing distances"
+        #distances = euclidean_distances(wv_mtrx,wv_mtrx)
+        from sklearn.cluster import SpectralClustering
+        self.est = SpectralClustering(n_clusters=2,
+                                      affinity="nearest_neighbors")
+        #print "fitting"
+        self.est.fit(wv_mtrx)
+        labels = self.est.labels_
+        self.labels[self.collection_ind()] = labels
+        
+class P2PTransform(SpkTransformer):
+    def transform(self):
+        wv_mtrx = self.collection_wvmtrx()
+        p2p = np.max(wv_mtrx,axis = 1) -np.min(wv_mtrx,axis = 1)
+        p2pt = np.argmax(wv_mtrx,axis = 1) - np.argmin(wv_mtrx,axis = 1)
+        print(np.shape(p2p))
+        print(np.shape(p2pt))
+        self.trnsmtrx = np.hstack((np.array([p2p]).T,np.array([p2pt]).T))
+    
+    
 class KMeansCluster(SpkSelector):
     def select(self):
         from sklearn.cluster import KMeans
