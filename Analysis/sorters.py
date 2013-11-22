@@ -99,3 +99,107 @@ class PCATransform(SpkTransformer):
         self.est.fit(wv_mtrx)
         self.trnsmtrx[self.collection_ind(),:] = self.est.transform(wv_mtrx)
         
+
+class DBSCANCluster(SpkSelector):
+    def select(self):
+        from sklearn.cluster import DBSCAN
+        from sklearn.preprocessing import StandardScaler
+        X = self.input_mtrx[self.collection_ind()]
+        #X = StandardScaler().fit_transform(X)
+        self.est = DBSCAN(eps = self.params['eps'],
+                          min_samples = self.params['min_samples'])
+        self.est.fit(X)
+        labels = self.est.labels_
+        self.labels[self.collection_ind()] = labels.astype(int)
+
+class WTR(SpkTransformer):
+    def __init__(self,spike_pool,selection_mask,params):        
+        super(SpkTransformer,self).__init__(spike_pool,selection_mask,params)
+        #self.trnsmtrx = np.zeros((np.shape(self.spike_pool.wv_mtrx)[0],self.params['trans_dims']))
+        
+    def transform(self):
+        import pywt
+        X = self.collection_wvmtrx()
+        wavelet = pywt.Wavelet(self.params['wavelet'])
+        
+        n_samples = X.shape[1]
+        n_spikes = X.shape[0]
+        
+        def full_coeff_len(datalen, filtlen, mode):
+            max_level = pywt.dwt_max_level(datalen, filtlen)
+            total_len = 0
+            for i in xrange(max_level):
+                datalen = pywt.dwt_coeff_len(datalen, filtlen, mode)
+                total_len += datalen 
+            return total_len + datalen
+        
+        n_features = full_coeff_len(n_samples, wavelet.dec_len, 'sym')
+        
+        est_mtrx = np.zeros((n_spikes,n_features))
+        self.trnsmtrx = np.zeros((np.shape(self.spike_pool.wv_mtrx)[0],n_features))
+        for i in xrange(n_spikes):
+            tmp = np.hstack(pywt.wavedec(X[i, :], wavelet, 'sym'))
+            est_mtrx[i, :] = tmp
+        self.trnsmtrx[self.collection_ind(),:] = est_mtrx
+
+class WvltPCA(SpkTransformer):
+    def transform(self):
+        wvlt_params = {'wavelet':'db1'}
+        wt = WTR(self.spike_pool,self.selection_mask,wvlt_params)
+        wt.transform()
+        from sklearn import decomposition
+        wv_mtrx = wt.trnsmtrx[self.collection_ind(),:]
+        self.est = decomposition.PCA(n_components=self.params['trans_dims'],
+                                     whiten = self.params['pca_whiten'])
+        self.est.fit(wv_mtrx)
+        self.trnsmtrx[self.collection_ind(),:] = self.est.transform(wv_mtrx)
+        
+class MedTrans(SpkTransformer):
+    def transform(self,inputmtrx = None):
+        if not(inputmtrx == None):
+            wv_mtrx = inputmtrx[self.collection_ind(),:]
+        else:
+            wv_mtrx = self.collection_wvmtrx()
+        wv_mtrx = self.collection_wvmtrx()
+        self.wv_med = np.median(wv_mtrx,axis = 0)
+        self.resmtrx = wv_mtrx-self.wv_med
+        err_vec = np.sum(np.sqrt(np.square(self.resmtrx)),axis = 1)
+        err_vec /= np.max(err_vec)
+        self.trnsmtrx[self.collection_ind(),:] = err_vec[:,np.newaxis]
+
+class ThreshSelector(SpkSelector):
+    def select(self,thresh = 0.5):
+        X = self.input_mtrx[self.collection_ind()]
+        self.labels[self.collection_ind()] = np.array(X > thresh,dtype = int)
+        
+class MBKMeansCluster(SpkSelector):
+    def select(self):
+        from sklearn.cluster import MiniBatchKMeans
+        X = self.input_mtrx[self.collection_ind()]
+        self.est = MiniBatchKMeans(n_clusters= self.params['kmeans_nc'],
+                          init = self.params['init'],batch_size = 20)
+        self.est.fit(X)
+        labels = self.est.labels_
+        self.labels[self.collection_ind()] = labels
+        
+class GMMCluster(SpkSelector):
+    def select(self):
+        from sklearn import mixture
+        X = self.input_mtrx[self.collection_ind()]
+        self.est = mixture.DPGMM(n_components=3)
+        self.est.fit(X)
+        labels = self.est.predict(X)
+        self.labels[self.collection_ind()] = labels
+
+class PCATransform2(SpkTransformer):
+    def transform(self,inputmtrx = None):
+        from sklearn import decomposition
+        if not(inputmtrx == None):
+            wv_mtrx = inputmtrx[self.collection_ind(),:]
+        else:
+            wv_mtrx = self.collection_wvmtrx()
+        self.est = decomposition.PCA(n_components=self.params['trans_dims'],
+                                     whiten = self.params['pca_whiten'])
+        self.est.fit(wv_mtrx)
+        self.trnsmtrx[self.collection_ind(),:] = self.est.transform(wv_mtrx)
+        

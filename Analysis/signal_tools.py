@@ -196,3 +196,26 @@ def calculate_groupwise_means(flylist = []):
     return average_matrix,stde_matrix,group_matrix
 
 
+def get_spks_in_wbs(wbt,sp):
+    wb_window = 10000
+    left_ind = 0
+    spk_wbind = zeros_like(array(sp))
+    wbt_a = array(wbt)
+    sp_a = array(sp)
+    wb_len = shape(wbt_a)[0]
+    sp_len = shape(array(sp))[0]
+    for i in range(sp_len):
+        right_ind = left_ind+wb_window
+        if right_ind >= wb_len:
+            right_ind = wb_len-1
+        x = sp_a[i] - wbt_a[left_ind:right_ind-1,newaxis].T > 0
+        x2 = sp_a[i] - wbt_a[left_ind+1:right_ind,newaxis].T > 0
+        try:
+            wb_ind = argwhere(~x2.T & x.T)[0,0] + left_ind
+        except ValueError:
+            print sp_len-1
+            print right_ind
+        spk_wbind[i] =  wb_ind
+        if wb_ind > left_ind:
+            left_ind = wb_ind-1
+    return spk_wbind
