@@ -41,7 +41,7 @@ def _new_spikepool(cls,signal, t_stop, units=None, dtype=np.float,
                     file_origin=None, description=None, annotations=None):
         
     return SpikePool(signal,
-    			t_stop = t_stop,
+                t_stop = t_stop,
                 units = units,
                 sampling_rate = sampling_rate,
                 waveforms = waveforms,
@@ -219,3 +219,117 @@ def get_spks_in_wbs(wbt,sp):
         if wb_ind > left_ind:
             left_ind = wb_ind-1
     return spk_wbind
+    
+def get_trials(fly,function_index,position_index,sli,sigkey):
+    import defaults as df
+    retlist = list()
+    selected_trials_indices = [rps[0] for rps in fly.trial_matrix if rps[1] == function_index and rps[2] == position_index][sli]
+    for x in selected_trials_indices:
+        #first get the section presumed to include t-collision
+        start_ind = fly.trial_start_indicies[x]-fly.left_window
+        end_ind = fly.trial_start_indicies[x]+fly.right_window
+        #if self.get_wbf(start_ind,end_ind) > self.min_wbf:
+        #shift the start and end ind to correct for the actual collision time.
+        icol = where(fly.signals['Xpos'][fly.trial_start_indicies[x]+5000:end_ind] >= df.ol_volts_per_deg*89.5)[0][0]
+        offset = icol + 5000 - floor(int(fly.olepoch/fly.dt)) - 1
+        start_ind += offset
+        end_ind += offset
+        tsig = fly.signals['Xpos'].times
+        start_time = tsig[start_ind]
+        end_time = tsig[end_ind]
+        if sigkey in fly.processed_signals.keys():
+            if sigkey == 'spike_pool':
+                sp = fly.processed_signals['spike_pool']
+                sp_sind = argwhere(sp>start_time)[0]
+                sp_eind = argwhere(sp>end_time)[0] 
+                ### accessory signals
+                mask = fly.processed_signals['spike_mask']
+                sp_phases = fly.processed_signals['spk_phases']
+                sp_wbs = fly.processed_signals['spk_wbs']
+                ####cut up accessory signals
+                print sp_sind,sp_eind
+                cut_sp = sp.copy_slice(slice(sp_sind,sp_eind),rezero = False)
+                cut_mask = mask[sp_sind:sp_eind]
+                cut_phases = sp_phases[sp_sind:sp_eind]
+                cut_wbs = sp_wbs[sp_sind:sp_eind]
+                ####send them back in annotations
+                cut_sp.annotations['spike_mask'] = cut_mask
+                cut_sp.annotations['spk_phases'] = cut_phases
+                cut_sp.annotations['spk_wbs'] = cut_wbs
+                retlist.append(cut_sp)
+            else:
+                retlist.append(fly.processed_signals[sigkey][start_ind:end_ind])
+        if sigkey in fly.signals.keys():
+            sig = fly.signals[sigkey][start_ind:end_ind]
+            retlist.append(sig)
+            
+    return retlist
+    
+def calc_spike_phases(spike_pool,phases,times):
+    phase_idxs = np.zeros_like(np.array(spike_pool),dtype = int)
+    start_idx = 0
+    search_range = 1000
+    max_len = len(times)
+    for i,spk in enumerate(spike_pool):
+        try:
+            phase_idxs[i] = np.argwhere(np.diff(spk>times[start_idx:search_range]))[0][0]
+        except IndexError:
+            search_range = max_len-1
+            phase_idxs[i] = np.argwhere(np.diff(spk>times[start_idx:search_range]))[0][0]
+        phase_idxs[i] += start_idx
+        start_idx = phase_idxs[i]
+        search_range = 1000+start_idx
+        if search_range > max_len-1:
+            search_range = max_len-1
+    return phases[phase_idxs]
+
+def calc_spike_wbs(spike_pool,flips,times):
+    flip_tms = times[flips]
+    spike_wbs = np.zeros_like(np.array(spike_pool),dtype = int)
+    start_search = 0
+    end_search = 1000
+    search_len = len(spike_pool)
+    for i,spike in enumerate(spike_pool):
+        try:
+            spike_wbs[i] = argwhere(spike<flip_tms[start_search:end_search])[0]+start_search
+        except IndexError:
+            end_search = search_len
+            try:
+                spike_wbs[i] = argwhere(spike<flip_tms[start_search:end_search])[0]+start_search
+            except IndexError:
+                pass
+                #print spike
+                #print flip_tms[start_search:end_search]
+                #print argwhere(spike<flip_tms[start_search:end_search])
+        start_search = spike_wbs[i]
+        end_search = start_search + 1000
+        if end_search > search_len:
+            end_search = search_len
+    return spike_wbs
+
+def extract_cl_spike_rasters(fly,
+                             start_time,
+                             end_time,
+                             e_sweeps,
+                             spks,
+                             spk_phases,
+                             spk_masks,
+                             spk_wb_idxs,
+                             full_flights):
+    trials = list()
+    for trl_idx in full_flights:
+        swp_start = e_sweeps[trl_idx].times[0]
+        t_start = -1*(int(fly.clepoch/fly.dt)+int(fly.olepoch/fly.dt)+1)*fly.dt#-2*(self.epoch)
+        swp_times = e_sweeps[trl_idx].times - swp_start + t_start
+        f_spk_times = list()
+        f_spk_phases = list()
+        f_spk_wbs = list()
+        for spt,phs,msk,wbs in zip(spks[trl_idx],spk_phases[trl_idx],spk_masks[trl_idx],spk_wb_idxs[trl_idx]):
+            if msk:
+                f_spk_times.append(spt-swp_start+t_start)
+                f_spk_phases.append(phs)
+                f_spk_wbs.append(wbs)
+        trials.append({'f_spk_times':np.array(f_spk_times),
+                       'f_spk_phases':np.array(f_spk_phases),
+                       'f_spk_wbs':np.array(f_spk_wbs)})
+    return trials

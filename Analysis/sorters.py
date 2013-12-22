@@ -164,7 +164,7 @@ class MedTrans(SpkTransformer):
         self.wv_med = np.median(wv_mtrx,axis = 0)
         self.resmtrx = wv_mtrx-self.wv_med
         err_vec = np.sum(np.sqrt(np.square(self.resmtrx)),axis = 1)
-        err_vec /= np.max(err_vec)
+        #err_vec /= np.max(err_vec)
         self.trnsmtrx[self.collection_ind(),:] = err_vec[:,np.newaxis]
 
 class ThreshSelector(SpkSelector):
