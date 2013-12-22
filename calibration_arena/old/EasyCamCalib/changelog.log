@@ -1,0 +1,10 @@
+Version 1.1
+
+- It is now possible to run the toolbox under Windows. 
+- Major UI changes for improved usability.
+- Added a 3D plot of the camera positions to check for extrinsics consistency.
+- Reordering of the menu bar
+- Changes in the manual selection tool.
+- Added GUI for calibration options and calibration information.
+- Changed main executable file to EasyCamCalib.m
+- Updated UsersManual
