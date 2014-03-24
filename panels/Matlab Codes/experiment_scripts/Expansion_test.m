@@ -12,6 +12,7 @@ Panel_com('set_mode',[1 1]);pause(0.05); %set closed loop X closed loop Y
 Panel_com('set_velfunc_id',[0 0]);pause(0.01); %use default function on x and y channel (is this nessessary?)
 Panel_com('send_gain_bias',[-20.0,0,0,0]);pause(0.005);%
 Panel_com('set_position',[48 1]);pause(0.005); % start at close to fixation
+Panel_com('send_laser_pattern' ,[zeros(1,48) ones(1,48)]);
 Panel_com('start');
 pause(5);
 
@@ -20,6 +21,8 @@ pause(5);
 %for i = datasample([ones(1:10)*2;ones(1,5)*5,ones(1,5)*11],10,2,'replace',false)
 
 %Five reps of all five aproach rates presented from both sides.
+
+
 for rep = 1:5
     for i = datasample([1:5,1:5;ones(1,5)*5,ones(1,5)*11],10,2,'replace',false)
         approach_time = i(1);
@@ -36,6 +39,7 @@ for rep = 1:5
         Panel_com('send_gain_bias',[-20.0,0,0,0]);pause(0.005);%
         Panel_com('set_position',[48 1]);pause(0.005); % start at close to fixation
         Panel_com('start');
+        Panel_com('laser_off');
         pause(5);
 
         %% Start expansion
@@ -47,6 +51,7 @@ for rep = 1:5
         Panel_com('set_position',[2 expan_pole]);pause(0.005); %set the x position at begining y posistion is an exp parameter
         Panel_com('set_posfunc_id',[1 approach_time]);pause(0.01); %position function to run on channel 1 (X) 
         Panel_com('set_funcx_freq', expan_update_freq);pause(0.1); %run at 500hz 2ms steps
+        Panel_com('laser_on');
         Panel_com('start');
         pause(1.2);
         record_index = record_index+1;
