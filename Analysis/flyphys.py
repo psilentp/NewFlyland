@@ -288,13 +288,13 @@ class SpikeSorter(object):
             self.idx = idx
             self.wv_mtrx = wv_mtrx
         
-def get_fly_in_rootdir(data_root,fly_number,rep_ind):
+def get_fly_in_rootdir(data_root,fly_number,rep_ind,rec_location = 'B1'):
         data_dir = data_root + '/Fly%s'%(fly_number)
         data_files = os.listdir(data_dir)
-        abf_files = [f for f in data_files if '.abf' in f]
-        mat_files = [f for f in data_files if '.mat' in f]
+        abf_files = [f for f in data_files if '_%s.abf'%(rec_location) in f]
+        mat_files = [f for f in data_files if '_%s.mat'%(rec_location) in f]
         exp_note_files = [f for f in data_files if '.txt' in f]
-        post_process_files = [f for f in data_files if '.cpkl' in f]
+        post_process_files = [f for f in data_files if '_%s.cpkl'%(rec_location) in f]
         
         axon_file_path = data_dir + '/' + abf_files[rep_ind]
         mat_file_path = data_dir + '/' + mat_files[rep_ind]
@@ -314,4 +314,3 @@ def get_fly_in_rootdir(data_root,fly_number,rep_ind):
                         exp_note_path = exp_note_path,
                         post_process_path = post_process_path)
         return fly
-        
