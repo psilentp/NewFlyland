@@ -6,13 +6,20 @@
 fs = filesep;
 
 pathmap = containers.Map();
-pathmap('Windows_NT') = 'Pcontrol_paths_win.mat';
+pathmap('win32') = 'Pcontrol_paths_win.mat'
+pathmap('maci64') = 'Pcontrol_paths_mac.mat'
 load(pathmap(computer('arch')));
+
 
 %%
 %pixels in actual pattern
 azmuth_pix = 8*12;
-elev_pix = 8*3;
+elev_pix = 8*4;
+azmuth_shift = 8;
+
+az_bracket = [1, azmuth_pix];
+el_bracket = [azmuth_pix/2 - elev_pix/2+1, azmuth_pix/2 + ceil(elev_pix/2)];
+    
 pattern.gs_val = 3;
 pattern.x_num = azmuth_pix*(2^pattern.gs_val);%same as image Azm
 pattern.y_num = 12;
@@ -40,17 +47,21 @@ img_mat = ones(pattern.x_num-1,pattern.x_num-1)*7;
 %temp_mat holds the movie for a single y value
 movie_mat = ones(elev_pix,azmuth_pix,pattern.x_num)*7;
 
+%make a distance matrix
+distx = (1:ImgSize) - (ImgSize/2);
+disty = (1:ImgSize) - (ImgSize/2);
+ones_array = ones(length(disty),1);
+distance_mat = sqrt(((ones_array*distx).^2)' + ones_array*disty.^2);
+
 %Expand the pattern on all sides 45 deg
 for j = 1:floor(90/DegPerXstp)
     fprintf('.')
-    img_mat(ExpanPole-j:ExpanPole+j,ExpanPole-j:ExpanPole+j) = 0;
-    tmp_mat = floor(imresize(img_mat,[azmuth_pix azmuth_pix],'box'));
-    azmuth_pix/2-floor(elev_pix/2);
-    azmuth_pix/2+floor(elev_pix/2);
-    movie_mat(:,:,j) = tmp_mat(azmuth_pix/2-floor(elev_pix/2)+1:azmuth_pix/2+floor(elev_pix/2),:);
+    img_mat = (distance_mat > j)*7.0;
+    tmp_mat = imresize(img_mat,[azmuth_pix azmuth_pix],'box');
+    tmp_mat = circshift(tmp_mat,[azmuth_shift,0]);
+    movie_mat(:,:,j) = tmp_mat(el_bracket(1):el_bracket(2),az_bracket(1):az_bracket(2));
 end
-%%
-% 
+
 %create the set of stimuli -180 to + 150 in 30deg increments
 fprintf('\n')
 for ExpPol = [1:12;-180:30:150]
@@ -60,45 +71,16 @@ for ExpPol = [1:12;-180:30:150]
 end
 
 pattern.Pats = Pats;
-pattern.Panel_map = [36 32 28 35 31 27 34 30 26 33 29 25;
+pattern.Panel_map = [48 44 40 47 43 39 46 42 38 45 41 37;
+                     36 32 28 35 31 27 34 30 26 33 29 25;
                      24 20 16 23 19 15 22 18 14 21 17 13;
                      12 8  4  11 7  3  10 6  2  9  5  1];
-                   
+
 pattern.BitMapIndex = process_panel_map(pattern);
  
 pattern.data = Make_pattern_vector(pattern);
 
 directory_name = pattern_path;
-str = [directory_name fs 'Pattern_dithered_expansion_sq'];
+str = [directory_name fs 'Pattern_dithered_expansion_blob'];
 
 save(str, 'pattern');
-
-%% Functions
-update_freq = 90;
-trial_duration = 5.0;
-times = -1*trial_duration:1/update_freq:-0.001;
-trial_tail = 0.4; %400ms
-expan_fun = @(lv_ratio,t) floor(atand(lv_ratio ./ t)/DegPerXstp);
-
-func_path = function_path;
-
-hold on
-func = [expan_fun(-0.005,times), ones(1,trial_tail*update_freq)*expan_fun(-0.005,-0)];
-save([ func_path fs 'position_function_expan_5ms_sq.mat'], 'func');
-plot(func)
-
-func = [expan_fun(-0.02,times), ones(1,trial_tail*update_freq)*expan_fun(-0.02,-0)];
-save([ func_path fs 'position_function_expan_20ms_sq.mat'], 'func');
-plot(func)
-
-func = [expan_fun(-0.05,times), ones(1,trial_tail*update_freq)*expan_fun(-0.05,-0)];
-save([ func_path fs 'position_function_expan_50ms_sq.mat'], 'func');
-plot(func)
-
-func = [expan_fun(-0.1,times), ones(1,trial_tail*update_freq)*expan_fun(-0.1,-0)];
-save([ func_path fs 'position_function_expan_100ms_sq.mat'], 'func');
-plot(func)
-
-func = [expan_fun(-0.2,times), ones(1,trial_tail*update_freq)*expan_fun(-0.2,-0)];
-save([ func_path fs 'position_function_expan_500ms_sq.mat'], 'func');
-plot(func)
