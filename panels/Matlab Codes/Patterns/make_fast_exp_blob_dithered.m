@@ -23,7 +23,7 @@ el_bracket = [azmuth_pix/2 - elev_pix/2+1, azmuth_pix/2 + ceil(elev_pix/2)];
 pattern.gs_val = 3;
 pattern.x_num = azmuth_pix*(2^pattern.gs_val);%same as image Azm
 pattern.y_num = 12;
-pattern.num_panels = 12*3;
+pattern.num_panels = 12*4;
 
 pattern.row_compression = 0;
 ExpanPole = pattern.x_num/2;
@@ -40,7 +40,7 @@ DegPerPx = 360/azmuth_pix;
 DegPerXstp = 360/pattern.x_num;
 ZeroPxOffset = 45/DegPerPx - 4;
 
-Pats = ones(elev_pix, azmuth_pix, pattern.x_num, pattern.y_num+1)*7;
+Pats = ones(elev_pix,azmuth_pix, pattern.x_num, pattern.y_num+1)*7;
 
 %we draw a single frame pre crop into img_mat
 img_mat = ones(pattern.x_num-1,pattern.x_num-1)*7;
@@ -60,6 +60,7 @@ for j = 1:floor(90/DegPerXstp)
     tmp_mat = imresize(img_mat,[azmuth_pix azmuth_pix],'box');
     tmp_mat = circshift(tmp_mat,[azmuth_shift,0]);
     movie_mat(:,:,j) = tmp_mat(el_bracket(1):el_bracket(2),az_bracket(1):az_bracket(2));
+    %movie_mat(:,:,j) = tmp_mat(az_bracket(1):az_bracket(2),el_bracket(1):el_bracket(2));
 end
 
 %create the set of stimuli -180 to + 150 in 30deg increments
@@ -71,10 +72,15 @@ for ExpPol = [1:12;-180:30:150]
 end
 
 pattern.Pats = Pats;
-pattern.Panel_map = [48 44 40 47 43 39 46 42 38 45 41 37;
-                     36 32 28 35 31 27 34 30 26 33 29 25;
-                     24 20 16 23 19 15 22 18 14 21 17 13;
-                     12 8  4  11 7  3  10 6  2  9  5  1];
+%pattern.Panel_map = [48 44 40 47 43 39 46 42 38 45 41 37;
+%                     36 32 28 35 31 27 34 30 26 33 29 25;
+%                     24 20 16 23 19 15 22 18 14 21 17 13;
+%                     12 8  4  11 7  3  10 6  2  9  5  1];
+                 
+pattern.Panel_map =  [12 8  4  11 7  3  10 6  2  9  5  1;
+                      24 20 16 23 19 15 22 18 14 21 17 13;
+                      36 32 28 35 31 27 34 30 26 33 29 25;
+                      48 44 40 47 43 39 46 42 38 45 41 37];
 
 pattern.BitMapIndex = process_panel_map(pattern);
  
