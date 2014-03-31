@@ -8,6 +8,7 @@
  By Marti Bolivar
 */
 int go_pin = 30;
+volatile int wb_count;
 
 void setup() {
     // Set up the built-in LED pin as an output:
@@ -24,9 +25,14 @@ void loop() {
 
 void triggered(){
   if(digitalRead(go_pin)){
-    digitalWrite(0,LOW);
-    digitalWrite(19,HIGH);
-    delay(4);
+    if(wb_count > 2){
+      wb_count = 0;
+      digitalWrite(0,LOW);
+      digitalWrite(19,HIGH);
+      delay(2);
+    }
+    else{
+      wb_count++;
+    }
   }
 }
-
