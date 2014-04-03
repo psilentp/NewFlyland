@@ -54,27 +54,16 @@ void loop() {
     digitalWrite(sync_pin,LOW);
 }
 
-void wb_triggered(){
-  if(go_val){
-    delay(delay_val);
-    digitalWrite(led_pin,LOW);
-    digitalWrite(sync_pin,HIGH);
-    delay(led_pulse);
+void triggered(){
+  if(digitalRead(go_pin)){
+    if(wb_count > 2){
+      wb_count = 0;
+      digitalWrite(0,LOW);
+      digitalWrite(19,HIGH);
+      delay(2);
+    }
+    else{
+      wb_count++;
+    }
   }
-}
-
-void tmr_triggered(){
-  if(go_val){
-    digitalWrite(led_pin,LOW);
-    digitalWrite(sync_pin,HIGH);
-    delay(delay_val);
-  }
-}
-
-
-void set_state(){
-  x_state = (x_state*0.9 + (float(analogRead(x_in))/x_max)*0.1);
-  y_state = (y_state*0.9 + (float(analogRead(y_in))/y_max)*0.1);
-  delay_val = x_state*10.0;
-  go_val = (y_state > 0.1);
 }
